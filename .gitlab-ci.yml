@@ -22,4 +22,4 @@ pack:
     - npm pack
   artifacts:
     paths:
-    - *.tgz
+    - ./*.tgz
