@@ -1,0 +1,148 @@
+#!/usr/bin/env node
+const Paged = require('pagedjs');
+const puppeteer = require('puppeteer');
+const program = require('commander');
+// const temp = require("temp").track();
+const path = require('path');
+const fs = require('fs');
+const replaceExt = require('replace-ext');
+
+const express = require('express');
+const app = express();
+
+const PORT = 9999;
+
+program
+  .version(require('../package.json').version)
+  .arguments('[inputPath]')
+  .option('-i, --inputs [inputs]', 'Inputs')
+  .option('-o, --output [output]', 'Output')
+  .option('-d, --debug', 'Debug')
+  .option('-l, --landscape', 'Landscape printing', false)
+  .option('-s, --page-size [size]', 'Print to Page Size [size]')
+  .option('-w, --width [size]', 'Print to Page Width [width] in MM')
+  .option('-h --height [size]', 'Print to Page Height [weight] in MM')
+  // .option('-m, --page-margin [margin]', 'Print with margin [margin]')
+  // .option('-n, --hyphenate [lang]', 'Hyphenate with language [language], defaults to "en-us"')
+  // .option('-hi, --hypher_ignore [str]', 'Ignore passed element selectors, such as ".class_to_ignore, h1"')
+  // .option('-ho, --hypher_only [str]', 'Only hyphenate passed elements selector, such as ".hyphenate, aside"')
+  // .option('-e, --encoding [type]', 'Set the encoding of the input html, defaults to "utf-8"')
+  .option('-t, --timeout [ms]', 'Set a max timeout of [ms]')
+  .parse(process.argv);
+
+
+let input = program.inputs || program.args[0];
+
+let dir = process.cwd();
+let relativePath = path.resolve(dir, input);
+let output;
+let tmpFile, tmpPath;
+
+// var hyphenator;
+// var hyphenateOptions;
+
+if (!input) {
+  console.error("You must include an input path");
+  return process.exit(1);
+}
+
+if (['.html', '.xhtml'].indexOf(path.extname(relativePath)) === -1) {
+  console.error("Must pass a html or xhtml file as input");
+  return process.exit(1);
+}
+
+try {
+    fs.accessSync(relativePath, fs.F_OK);
+} catch (e) {
+    console.error("Input cannot be found", e);
+    return process.exit(1);
+}
+
+if (typeof(program.output) === "string") {
+  output = path.resolve(dir, program.output);
+} else if (typeof(program.output) !== "undefined") {
+  output = './' + replaceExt(path.basename(input), '.pdf');
+} else {
+  output = "output.pdf";
+}
+
+console.log("output", output, program.output);
+
+/*
+if (program.hyphenate) {
+  hyphenateOptions = {
+    ignore: program.hypher_ignore || undefined,
+    only: program.hypher_only || undefined,
+    encoding: program.encoding || undefined
+  }
+
+  tmpPath = replaceExt(relativePath, ".hyphenated.html");
+
+  // tmpFile = temp.openSync({suffix: '.html'});
+  // tmpPath = tmpFile.path;
+  // Create a new Hyphenator, with passed language
+  hyphenator = new Hyphenator(program.hyphenate);
+  hyphenator.process(relativePath, tmpPath, hyphenateOptions);
+
+  console.log("Hyphenated for", typeof(program.hyphenate) === "string" ? program.hyphenate : "en-us");
+
+  if (program.debug && tmpPath) {
+    console.log("Hyphenated file at:", tmpPath);
+  }
+
+}
+*/
+
+
+(async () => {
+  const browser = await puppeteer.launch({
+    // headless: false,
+    // args: ['--no-sandbox', '--allow-file-access-from-files', '--enable-local-file-accesses']
+  });
+
+  const page = await browser.newPage();
+
+  let relativePath = path.resolve(dir, input);
+  let dirname = path.dirname(relativePath);
+  let basename = path.basename(relativePath);
+
+  app.use("/print", express.static(dirname))
+
+  let scriptPath = path.resolve(dir, "./node_modules/pagedjs/dist/");
+  app.use("/polyfill", express.static(scriptPath))
+
+  let server = app.listen(PORT);
+
+  await page.goto(`http://localhost:${PORT}/print/${basename}`);
+
+  await page.addScriptTag({
+    url: `http://localhost:${PORT}/polyfill/paged.polyfill.js`
+  });
+
+  await page.exposeFunction('onPagesRendered', async (msg, width, height, orientation) => {
+      console.log(msg);
+      console.log("Saved to", output);
+      let pdf = await page.pdf({
+        path: output,
+        printBackground: true,
+        displayHeaderFooter: false,
+        width: width,
+        height: height,
+        orientation: orientation,
+        margin: {
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        },
+        // format: 'A4'
+      }).catch((e) => {
+        console.error(e);
+      })
+
+      server.close();
+
+      await browser.close();
+  });
+
+})();
