@@ -5,7 +5,7 @@
   "license": "MIT",
   "homepage": "https://pagedmedia.org",
   "repository": {
-  "type": "git",
+    "type": "git",
     "url": "https://gitlab.pagedmedia.org/polyfills/pagedjs-cli.git"
   },
   "scripts": {
@@ -14,7 +14,7 @@
   "dependencies": {
     "commander": "^2.15.1",
     "express": "^4.16.3",
-    "pagedjs": "0.0.1",
+    "pagedjs": "0.0.2",
     "puppeteer": "^1.2.0",
     "replace-ext": "^1.0.0"
   }
