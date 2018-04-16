@@ -38,6 +38,8 @@ let relativePath = path.resolve(dir, input);
 let output;
 let tmpFile, tmpPath;
 
+let headless = typeof program.debug === "undefined";
+
 // var hyphenator;
 // var hyphenateOptions;
 
@@ -65,8 +67,6 @@ if (typeof(program.output) === "string") {
 } else {
   output = "output.pdf";
 }
-
-console.log("output", output, program.output);
 
 /*
 if (program.hyphenate) {
@@ -96,7 +96,7 @@ if (program.hyphenate) {
 
 (async () => {
   const browser = await puppeteer.launch({
-    // headless: false,
+    headless: headless
     // args: ['--no-sandbox', '--allow-file-access-from-files', '--enable-local-file-accesses']
   });
 
@@ -113,36 +113,47 @@ if (program.hyphenate) {
 
   let server = app.listen(PORT);
 
-  await page.goto(`http://localhost:${PORT}/print/${basename}`);
+  await page.goto(`http://localhost:${PORT}/print/${basename}?preview=true`);
 
-  await page.addScriptTag({
-    url: `http://localhost:${PORT}/polyfill/paged.polyfill.js`
+  await page.exposeFunction('PuppeteerLogger', (msg, counter) => {
+    console.log(msg, counter);
   });
 
   await page.exposeFunction('onPagesRendered', async (msg, width, height, orientation) => {
-      console.log(msg);
-      console.log("Saved to", output);
-      let pdf = await page.pdf({
-        path: output,
-        printBackground: true,
-        displayHeaderFooter: false,
-        width: width,
-        height: height,
-        orientation: orientation,
-        margin: {
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-        },
-        // format: 'A4'
-      }).catch((e) => {
-        console.error(e);
-      })
+      console.log(msg, width, height, orientation);
 
-      server.close();
+      if (headless) {
+        let pages = await page.waitForSelector(".pages");
+        let pdf = await page.pdf({
+          path: output,
+          printBackground: true,
+          displayHeaderFooter: false,
+          width: width,
+          height: height,
+          orientation: orientation,
+          margin: {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+          },
+          // format: 'A4'
+        }).catch((e) => {
+          console.error(e);
+        });
 
-      await browser.close();
+        console.log("Saved to", output);
+
+        server.close();
+
+        await browser.close();
+      }
+
+
+  });
+
+  await page.addScriptTag({
+    url: `http://localhost:${PORT}/polyfill/paged.polyfill.js`
   });
 
 })();

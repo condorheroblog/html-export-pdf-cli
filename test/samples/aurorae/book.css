@@ -158,6 +158,20 @@ section[data-type="epigraph"],
   font-variant-numeric: oldstyle-nums;
 }
 
+.shorter:nth(1) {
+  position: running(shorter1);
+}
+
+.shorter:nth(2) {
+  position: running(shorter2);
+}
+
+.page:nth(1) {
+  content: --var-1;
+}
+
+--var-1 = dataurl:svg
+
 
 /* flexbox */
 section[data-type="copyright"] #flexbox {
