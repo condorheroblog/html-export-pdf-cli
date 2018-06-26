@@ -10,11 +10,11 @@ html{
 }
 
 @page {
-  size: 148mm 210mm portait;
+  size: 148mm 210mm portait
 }
 
 @media screen {
-  .page {
+  .baseline .pagedjs_page {
     background-image:  repeating-linear-gradient(180deg, transparent  0, transparent 14px , rgba(0,255,0,0.7) var(--baseline)) ;
     background-size: cover;
     background-position:  0 -3px , 0 0
@@ -157,20 +157,6 @@ section[data-type="epigraph"],
   /* font-style: italic; */
   font-variant-numeric: oldstyle-nums;
 }
-
-.shorter:nth(1) {
-  position: running(shorter1);
-}
-
-.shorter:nth(2) {
-  position: running(shorter2);
-}
-
-.page:nth(1) {
-  content: --var-1;
-}
-
---var-1 = dataurl:svg
 
 
 /* flexbox */

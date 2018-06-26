@@ -123,7 +123,7 @@ if (program.hyphenate) {
       console.log(msg, width, height, orientation);
 
       if (headless) {
-        let pages = await page.waitForSelector(".pages");
+        let pages = await page.waitForSelector(".pagedjs_pages");
         let pdf = await page.pdf({
           path: output,
           printBackground: true,
@@ -136,8 +136,7 @@ if (program.hyphenate) {
             right: 0,
             bottom: 0,
             left: 0,
-          },
-          // format: 'A4'
+          }
         }).catch((e) => {
           console.error(e);
         });
