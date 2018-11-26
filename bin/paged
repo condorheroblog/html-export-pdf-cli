@@ -1,16 +1,11 @@
 #!/usr/bin/env node
-const Paged = require('pagedjs');
-const puppeteer = require('puppeteer');
 const program = require('commander');
-// const temp = require("temp").track();
+const Printer = require("../");
 const path = require('path');
 const fs = require('fs');
+const { promisify } = require('util');
+const writeFileAsync = promisify(fs.writeFile);
 const replaceExt = require('replace-ext');
-
-const express = require('express');
-const app = express();
-
-const PORT = 9999;
 
 program
   .version(require('../package.json').version)
@@ -28,6 +23,7 @@ program
   // .option('-ho, --hypher_only [str]', 'Only hyphenate passed elements selector, such as ".hyphenate, aside"')
   // .option('-e, --encoding [type]', 'Set the encoding of the input html, defaults to "utf-8"')
   .option('-t, --timeout [ms]', 'Set a max timeout of [ms]')
+  .option('-x, --html', 'output html file')
   .parse(process.argv);
 
 
@@ -95,64 +91,26 @@ if (program.hyphenate) {
 
 
 (async () => {
-  const browser = await puppeteer.launch({
-    headless: headless
-    // args: ['--no-sandbox', '--allow-file-access-from-files', '--enable-local-file-accesses']
-  });
+  let printer = new Printer(headless);
 
-  const page = await browser.newPage();
+  let file;
+  if (headless) {
+    let options = {};
+    if (program.html) {
+      file = await printer.html(input, options);
+      output = replaceExt(output, '.html');
+    } else {
+      file = await printer.pdf(input, options);
+    }
+  } else {
+    printer.preview(input);
+  }
 
-  let relativePath = path.resolve(dir, input);
-  let dirname = path.dirname(relativePath);
-  let basename = path.basename(relativePath);
-
-  app.use("/print", express.static(dirname))
-
-  let scriptPath = path.resolve(dir, "./node_modules/pagedjs/dist/");
-  app.use("/polyfill", express.static(scriptPath))
-
-  let server = app.listen(PORT);
-
-  await page.goto(`http://localhost:${PORT}/print/${basename}?preview=true`);
-
-  await page.exposeFunction('PuppeteerLogger', (msg, counter) => {
-    console.log(msg, counter);
-  });
-
-  await page.exposeFunction('onPagesRendered', async (msg, width, height, orientation) => {
-      console.log(msg, width, height, orientation);
-
-      if (headless) {
-        let pages = await page.waitForSelector(".pagedjs_pages");
-        let pdf = await page.pdf({
-          path: output,
-          printBackground: true,
-          displayHeaderFooter: false,
-          width: width,
-          height: height,
-          orientation: orientation,
-          margin: {
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-          }
-        }).catch((e) => {
-          console.error(e);
-        });
-
-        console.log("Saved to", output);
-
-        server.close();
-
-        await browser.close();
-      }
-
-
-  });
-
-  await page.addScriptTag({
-    url: `http://localhost:${PORT}/polyfill/paged.polyfill.js`
-  });
-
+  if (file) {
+    fs.writeFile(output, file, (err) => {
+      if (err) throw err;
+      console.log('Saved to', output);
+      process.exit(0);
+    });
+  }
 })();
