@@ -1,6 +1,6 @@
 {
   "name": "pagedjs-cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Fred Chasen",
   "license": "MIT",
   "homepage": "https://pagedmedia.org",
@@ -8,17 +8,19 @@
     "type": "git",
     "url": "https://gitlab.pagedmedia.org/polyfills/pagedjs-cli.git"
   },
+  "bin": "./bin/paged",
   "scripts": {
     "start": "./bin/paged",
-    "pkg": "./bin/pkg"
+    "build": "pkg ."
   },
   "main": "index.js",
   "dependencies": {
     "commander": "^2.19.0",
     "express": "^4.16.4",
     "hyphenopoly": "^2.5.1",
-    "pagedjs": "latest",
-    "pkg": "^4.3.4",
+    "katex": "^0.10.0",
+    "mathjax": "^2.7.5",
+    "pagedjs": "^0.1.26",
     "puppeteer": "^1.10.0",
     "replace-ext": "^1.0.0"
   },
