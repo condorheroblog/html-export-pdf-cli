@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const program = require('commander');
+const ora = require('ora');
 const Printer = require("../");
 const path = require('path');
 const fs = require('fs');
@@ -24,13 +25,25 @@ program
   // .option('-e, --encoding [type]', 'Set the encoding of the input html, defaults to "utf-8"')
   .option('-t, --timeout [ms]', 'Set a max timeout of [ms]')
   .option('-x, --html', 'output html file')
+  .option('-b, --blockLocal', 'Disallow access to filesystem for local files')
   .parse(process.argv);
 
 
 let input = program.inputs || program.args[0];
 
 let dir = process.cwd();
-let relativePath = path.resolve(dir, input);
+
+let url;
+let relativePath;
+let allowLocal;
+try {
+  url = new URL(input);
+  allowLocal = false;
+} catch {
+  relativePath = path.resolve(dir, input);
+  allowLocal = !program.blockLocal;
+}
+
 let output;
 let tmpFile, tmpPath;
 
@@ -44,16 +57,19 @@ if (!input) {
   return process.exit(1);
 }
 
-if (['.html', '.xhtml'].indexOf(path.extname(relativePath)) === -1) {
-  console.error("Must pass a html or xhtml file as input");
-  return process.exit(1);
-}
+if (relativePath) {
 
-try {
-    fs.accessSync(relativePath, fs.F_OK);
-} catch (e) {
-    console.error("Input cannot be found", e);
+  if (['.html', '.xhtml'].indexOf(path.extname(relativePath)) === -1) {
+    console.error("Must pass a html or xhtml file as input");
     return process.exit(1);
+  }
+
+  try {
+      fs.accessSync(relativePath, fs.F_OK);
+  } catch (e) {
+      console.error("Input cannot be found", e);
+      return process.exit(1);
+  }
 }
 
 if (typeof(program.output) === "string") {
@@ -64,34 +80,40 @@ if (typeof(program.output) === "string") {
   output = "output.pdf";
 }
 
-/*
-if (program.hyphenate) {
-  hyphenateOptions = {
-    ignore: program.hypher_ignore || undefined,
-    only: program.hypher_only || undefined,
-    encoding: program.encoding || undefined
-  }
 
-  tmpPath = replaceExt(relativePath, ".hyphenated.html");
+const spinner = ora({
+  spinner: "circleQuarters"
+})
 
-  // tmpFile = temp.openSync({suffix: '.html'});
-  // tmpPath = tmpFile.path;
-  // Create a new Hyphenator, with passed language
-  hyphenator = new Hyphenator(program.hyphenate);
-  hyphenator.process(relativePath, tmpPath, hyphenateOptions);
 
-  console.log("Hyphenated for", typeof(program.hyphenate) === "string" ? program.hyphenate : "en-us");
-
-  if (program.debug && tmpPath) {
-    console.log("Hyphenated file at:", tmpPath);
-  }
-
+if (typeof input === "string") {
+  spinner.start("Loading: " + input);
+} else {
+  spinner.start("Loading");
 }
-*/
-
 
 (async () => {
-  let printer = new Printer(headless);
+  let printer = new Printer(headless, allowLocal);
+
+  printer.on("page", (page) => {
+    if (page.position === 0) {
+      spinner.succeed("Loaded");
+
+      spinner.start("Rendering: Page " + (page.position + 1));
+    } else {
+      spinner.text = "Rendering: Page " + (page.position + 1)
+    }
+  });
+
+  printer.on("rendered", (msg) => {
+    spinner.succeed(msg);
+    spinner.start("Generating");
+  });
+
+  printer.on("postprocessing", (msg) => {
+    spinner.succeed("Generated");
+    spinner.start("Processing");
+  });
 
   let file;
   if (headless) {
@@ -106,10 +128,12 @@ if (program.hyphenate) {
     printer.preview(input);
   }
 
+  spinner.succeed("Processed");
+
   if (file) {
     fs.writeFile(output, file, (err) => {
       if (err) throw err;
-      console.log('Saved to', output);
+      spinner.succeed("Saved to " + output);
       process.exit(0);
     });
   }
