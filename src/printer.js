@@ -39,7 +39,7 @@ class Printer extends EventEmitter {
   async setup() {
     const browser = await puppeteer.launch({
       headless: this.headless,
-      args: this.allowLocal ? ['--allow-file-access-from-files', '--disable-dev-shm-usage', '--no-sandbox'] : ['--disable-dev-shm-usage', '--no-sandbox'],
+      args: this.allowLocal ? ['--allow-file-access-from-files', '--disable-dev-shm-usage'] : ['--disable-dev-shm-usage'],
       ignoreHTTPSErrors: true
     });
 
