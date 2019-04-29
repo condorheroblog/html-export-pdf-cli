@@ -188,7 +188,9 @@ class Printer extends EventEmitter {
     const meta = await page.evaluate(() => {
       let meta = {};
       let title = document.querySelector("title");
-      meta.title = title.textContent.trim();
+      if (title) {
+        meta.title = title.textContent.trim();
+      }
       let metaTags = document.querySelectorAll("meta");
       [...metaTags].forEach((tag) => {
         if (tag.name) {
