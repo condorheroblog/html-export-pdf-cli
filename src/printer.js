@@ -43,6 +43,8 @@ class Printer extends EventEmitter {
       ignoreHTTPSErrors: true
     });
 
+    this.browser = browser;
+
     return browser;
   }
 
@@ -53,7 +55,7 @@ class Printer extends EventEmitter {
     });
 
     if (!this.browser) {
-      this.browser = await this.setup();
+      await this.setup();
     }
 
     const page = await this.browser.newPage();
@@ -247,6 +249,10 @@ class Printer extends EventEmitter {
   async preview(input) {
     let page = await this.render(input);
     return page;
+  }
+
+  async close() {
+    return this.browser.close();
   }
 
 }
