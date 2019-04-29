@@ -3,13 +3,16 @@ const EventEmitter = require('events');
 const puppeteer = require('puppeteer');
 const util = require('util');
 const fs = require('fs');
-const readFile = util.promisify(fs.readFile);
+const fetch = require("node-fetch");
 
 const path = require('path');
 
 let dir = process.cwd();
 
-let scriptPath = path.resolve(dir, "./node_modules/pagedjs/dist/");
+// Find top most pagedjs
+let pagedjsLocation = require.resolve("pagedjs/dist/paged.polyfill.js");
+let paths = pagedjsLocation.split("node_modules");
+let scriptPath = paths[0] + "node_modules" + paths[paths.length-1];
 
 const PostProcesser = require('./postprocesser');
 
@@ -36,7 +39,8 @@ class Printer extends EventEmitter {
   async setup() {
     const browser = await puppeteer.launch({
       headless: this.headless,
-      args: this.allowLocal ? ['--allow-file-access-from-files'] : []
+      args: this.allowLocal ? ['--allow-file-access-from-files', '--disable-dev-shm-usage', '--no-sandbox'] : ['--disable-dev-shm-usage', '--no-sandbox'],
+      ignoreHTTPSErrors: true
     });
 
     return browser;
@@ -54,10 +58,15 @@ class Printer extends EventEmitter {
 
     const page = await this.browser.newPage();
 
-    let url, html;
+    let uri, url, html;
     if (typeof input === "string") {
       try {
-        url = new URL(input);
+        uri = new URL(input);
+        if (uri.protocol === "https:") {
+          html = await fetch(input)
+            .then(res => res.text())
+        }
+        url = input;
       } catch {
         let relativePath = path.resolve(dir, input);
         url = "file://" + relativePath;
@@ -72,6 +81,18 @@ class Printer extends EventEmitter {
         .catch((e) => {
           console.error(e);
         });
+
+      if (url) {
+        await page.evaluate((url) => {
+          let base = document.querySelector("base");
+          if (!base) {
+            base = document.createElement("base");
+            document.querySelector("head").appendChild(base);
+          }
+          base.setAttribute("href", url);
+        }, url);
+      }
+
     } else {
       await page.goto(url)
         .catch((e) => {
@@ -85,8 +106,10 @@ class Printer extends EventEmitter {
       }
     });
 
+
+
     await page.addScriptTag({
-      path: path.resolve(__dirname, "../node_modules/pagedjs/dist/paged.polyfill.js")
+      path: scriptPath
     });
 
     // await page.exposeFunction('PuppeteerLogger', (msg) => {
