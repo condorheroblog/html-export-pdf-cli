@@ -16,18 +16,6 @@ let scriptPath = paths[0] + "node_modules" + paths[paths.length-1];
 
 const PostProcesser = require('./postprocesser');
 
-const PDF_SETTINGS = {
-  printBackground: true,
-  displayHeaderFooter: false,
-  preferCSSPageSize: true,
-  margin: {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  }
-};
-
 class Printer extends EventEmitter {
   constructor(headless, allowLocal) {
     super();
@@ -205,7 +193,7 @@ class Printer extends EventEmitter {
     let settings = {
       printBackground: true,
       displayHeaderFooter: false,
-      preferCSSPageSize: options.width ? false : true,
+//      preferCSSPageSize: options.width ? false : true, // does not currently work with bleeds: needs to be calculated from the document
       width: options.width,
       height: options.height,
       orientation: options.orientation,
@@ -217,7 +205,21 @@ class Printer extends EventEmitter {
       }
     }
 
-    let pdf = await page.pdf(PDF_SETTINGS)
+    if (!options.width) { // calculate paper size from the first page's dimensions
+      await page.exposeFunction('setWidthHeight', (width, height) => {
+        settings.width = `${width}mm`;
+        settings.height = `${height}mm`;
+      });
+      await page.evaluate(() => {
+        const rect = document.querySelector('.pagedjs_page').getBoundingClientRect();
+        setWidthHeight(
+          Math.round(CSS.px(rect.width).to('mm').value),
+          Math.round(CSS.px(rect.height).to('mm').value)
+        );
+      });
+    }
+
+    let pdf = await page.pdf(settings)
       .catch((e) => {
         console.error(e);
       });
