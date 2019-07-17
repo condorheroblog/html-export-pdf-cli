@@ -91,9 +91,8 @@ class Printer extends EventEmitter {
     }
 
     await page.evaluate(() => {
-      window.PagedConfig = {
-        auto: false
-      }
+      window.PagedConfig = window.PagedConfig || {};
+      window.PagedConfig.auto = false;
     });
 
 
