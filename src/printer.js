@@ -192,7 +192,7 @@ class Printer extends EventEmitter {
     let settings = {
       printBackground: true,
       displayHeaderFooter: false,
-//      preferCSSPageSize: options.width ? false : true, // does not currently work with bleeds: needs to be calculated from the document
+      preferCSSPageSize: options.width ? false : true,
       width: options.width,
       height: options.height,
       orientation: options.orientation,
@@ -202,20 +202,6 @@ class Printer extends EventEmitter {
         bottom: 0,
         left: 0,
       }
-    }
-
-    if (!options.width) { // calculate paper size from the first page's dimensions
-      await page.exposeFunction('setWidthHeight', (width, height) => {
-        settings.width = `${width}mm`;
-        settings.height = `${height}mm`;
-      });
-      await page.evaluate(() => {
-        const rect = document.querySelector('.pagedjs_page').getBoundingClientRect();
-        setWidthHeight(
-          Math.round(CSS.px(rect.width).to('mm').value),
-          Math.round(CSS.px(rect.height).to('mm').value)
-        );
-      });
     }
 
     let pdf = await page.pdf(settings)
