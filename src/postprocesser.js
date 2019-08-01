@@ -203,6 +203,100 @@ class PostProcesser extends EventEmitter {
     console.log(page);
   }
 
+  /**
+   * Adds a table of content to the generated PDF
+   * 
+   * Ideally this would not be required if Chromium would add this directly.
+   * So if these bugs are closed this can probably be removed again:
+   * - https://bugs.chromium.org/p/chromium/issues/detail?id=840455
+   * - https://github.com/GoogleChrome/puppeteer/issues/1778
+   * 
+   * This code is heavily based on @Hopding's comment at:
+   * https://github.com/Hopding/pdf-lib/issues/127#issuecomment-502450179
+   */
+  addOutline(outlineSpec) {
+    const outline = JSON.parse(JSON.stringify(outlineSpec))
+
+
+    const pageRefs = [];
+    this.pdfDoc.catalog.Pages.traverse((kid, ref) => {
+      if (kid instanceof PDFLib.PDFPage)
+        pageRefs.push(ref);
+    });
+    const index = this.pdfDoc.index;
+
+    const outlineReference = index.nextObjectNumber();
+
+    const countOutlineLayer = (layer) => {
+      let count = 0;
+      for (const outlineEntry of layer) {
+        ++count;
+        count += countOutlineLayer(outlineEntry.children);
+      }
+      return count;
+    }
+
+    const createItemsForOutlineLayer = (layer, parent) => {
+      layer.forEach((outlineItem, i) => {
+        let prev = i > 0 ? layer[i - 1].ref : null;
+        let next = i < layer.length - 1 ? layer[i + 1].ref : null;
+        const pdfItem = createOutlineItem(outlineItem, prev, next, parent);
+        index.assign(outlineItem.ref, pdfItem);
+      });
+    }
+
+    const createOutlineItem = (outlineItem, prev, next, parent) => {
+      if (!outlineItem.id) {
+        throw new Error(`Cannot generate outline item with title '${outlineItem.title} ` +
+                        `without any target anchor. Please specify an 'id' attribute for ` +
+                        `the relevant HTML element`);
+      }
+      const item = {
+        Title: PDFLib.PDFString.fromString(outlineItem.title),
+        Parent: parent,
+        Dest: PDFLib.PDFName.from(outlineItem.id),
+      };
+      if (prev) {
+        item.Prev = prev;
+      }
+      if (next) {
+        item.Next = next;
+      }
+      if (outlineItem.children.length > 0) {
+        item.First = outlineItem.children[0].ref;
+        item.Last = outlineItem.children[outlineItem.children.length - 1].ref;
+        item.Count = PDFLib.PDFNumber.fromNumber(countOutlineLayer(outlineItem.children));
+        createItemsForOutlineLayer(outlineItem.children, outlineItem.ref);
+      }
+
+      return PDFLib.PDFDictionary.from(item, index);
+    };
+
+    const createOutlineReferences = (outlineEntry) => {
+      outlineEntry.ref = index.nextObjectNumber();
+      for (const child of outlineEntry.children) {
+        createOutlineReferences(child);
+      }
+    }
+
+    for (const outlineItem of outline) {
+      createOutlineReferences(outlineItem);
+    }
+
+    createItemsForOutlineLayer(outline, outlineReference);
+    
+    const pdfOutline = PDFLib.PDFDictionary.from(
+      {
+        First: outline[0].ref,
+        Last: outline[outline.length - 1].ref,
+        Count: PDFLib.PDFNumber.fromNumber(countOutlineLayer(outline)),
+      },
+      index,
+    );
+    index.assign(outlineReference, pdfOutline);
+    this.pdfDoc.catalog.set('Outlines', outlineReference);
+  }
+
   save() {
     let writer = new PDFDocumentWriter();
     const pdfBytes = writer.saveToBytesWithXRefTable(this.pdfDoc);
