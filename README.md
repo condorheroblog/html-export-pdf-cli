@@ -32,6 +32,7 @@ pagedjs-cli ./path/to/index.html -o result.pdf
 -ho, --hypher_only [str]    Only hyphenate passed elements selector, such as ".hyphenate, aside"
 -e, --encoding [type]       Set the encoding of the input html, defaults to "utf-8"
 -t, --timeout [ms]          Set a max timeout of [ms]
+--outline-tags [tags]       Specifies that an outline should be generated for the resulting PDF document. [tags] specifies which HTML tags should be considered for that outline. "h1,h2" will trigger an outline with "h1" tags as root elements and "h2" elements as their childs.
 ```
 
 ## Hyphenation

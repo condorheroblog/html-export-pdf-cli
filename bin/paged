@@ -26,6 +26,11 @@ program
   .option('-t, --timeout [ms]', 'Set a max timeout of [ms]')
   .option('-x, --html', 'output html file')
   .option('-b, --blockLocal', 'Disallow access to filesystem for local files')
+  .option('--outline-tags [tags]', 'Specifies that an outline should be ' +
+          'generated for the resulting PDF document. [tags] specifies which ' +
+          'HTML tags should be considered for that outline. ' +
+          '"h1,h2" will trigger an outline with "h1" tags as root elements ' +
+          'and "h2" elements as their childs.')
   .parse(process.argv);
 
 
@@ -122,6 +127,7 @@ if (typeof input === "string") {
       file = await printer.html(input, options);
       output = replaceExt(output, '.html');
     } else {
+      options.outlineTags = !program.outlineTags ? [] : program.outlineTags.split(',');
       file = await printer.pdf(input, options);
     }
   } else {

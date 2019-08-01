@@ -182,6 +182,54 @@ class Printer extends EventEmitter {
     return page;
   }
 
+  async _parseOutline(page, tags) {
+    return await page.evaluate((tags) => {
+      const tagsToProcess = [];
+      for (const node of document.querySelectorAll(tags.join(','))) {
+        tagsToProcess.push(node);
+      }
+      tagsToProcess.reverse();
+
+      const root = {children: [], depth: -1};
+      let currentOutlineNode = root;
+
+      while (tagsToProcess.length > 0) {
+        const tag = tagsToProcess.pop();
+        const orderDepth = tags.indexOf(tag.tagName.toLowerCase());
+
+        if (orderDepth < currentOutlineNode.depth) {
+          currentOutlineNode = currentOutlineNode.parent;
+          tagsToProcess.push(tag);
+        } else {
+          const newNode = {
+            title: tag.innerText,
+            id: tag.id,
+            children: [],
+            depth: orderDepth,
+          };
+          if (orderDepth == currentOutlineNode.depth) {
+            newNode.parent = currentOutlineNode.parent;
+            currentOutlineNode.parent.children.push(newNode);
+            currentOutlineNode = newNode;
+          } else if (orderDepth > currentOutlineNode.depth) {
+            newNode.parent = currentOutlineNode;
+            currentOutlineNode.children.push(newNode);
+            currentOutlineNode = newNode;
+          }
+        }
+      }
+
+      const stripParentProperty = (node) => {
+        node.parent = undefined;
+        for (const child of node.children) {
+          stripParentProperty(child);
+        }
+      }
+      stripParentProperty(root)
+      return root.children;
+    }, tags);
+  }
+
   async pdf(input, options={}) {
     let page = await this.render(input);
 
@@ -200,6 +248,8 @@ class Printer extends EventEmitter {
       })
       return meta;
     });
+
+    const outline = options.outlineTags.length > 0 ? await this._parseOutline(page, options.outlineTags) : null;
 
     let settings = {
       printBackground: true,
@@ -228,6 +278,9 @@ class Printer extends EventEmitter {
     let post = new PostProcesser(pdf);
     post.metadata(meta);
     post.boxes(this.pages);
+    if (outline) {
+      post.addOutline(outline);
+    }
     pdf = post.save();
 
     return pdf;
