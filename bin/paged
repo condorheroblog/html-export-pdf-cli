@@ -31,7 +31,15 @@ program
           "HTML tags should be considered for that outline. " +
           "\"h1,h2\" will trigger an outline with \"h1\" tags as root elements " +
           "and \"h2\" elements as their childs.")
+  .option("--additional-script <script>", "Additional script tags which are " +
+          "added to the HTML document before rendering. This is useful for " +
+          "adding custom pagedjs handlers. The option can be repeated.",
+          collect, [])
   .parse(process.argv);
+
+function collect(value, previous) {
+  return previous.concat(value);
+}
 
 
 let input = program.inputs || program.args[0];
@@ -96,7 +104,7 @@ if (typeof input === "string") {
 }
 
 (async () => {
-  let printer = new Printer(headless, allowLocal);
+  let printer = new Printer(headless, allowLocal, program.additionalScript);
 
   printer.on("page", (page) => {
     if (page.position === 0) {
