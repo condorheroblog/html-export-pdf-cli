@@ -1,11 +1,8 @@
-const Paged = require('pagedjs');
-const EventEmitter = require('events');
-const puppeteer = require('puppeteer');
-const util = require('util');
-const fs = require('fs');
+const EventEmitter = require("events");
+const puppeteer = require("puppeteer");
 const fetch = require("node-fetch");
 
-const path = require('path');
+const path = require("path");
 
 let dir = process.cwd();
 
@@ -14,7 +11,7 @@ let pagedjsLocation = require.resolve("pagedjs/dist/paged.polyfill.js");
 let paths = pagedjsLocation.split("node_modules");
 let scriptPath = paths[0] + "node_modules" + paths[paths.length-1];
 
-const PostProcesser = require('./postprocesser');
+const PostProcesser = require("./postprocesser");
 
 class Printer extends EventEmitter {
   constructor(headless, allowLocal) {
@@ -27,7 +24,7 @@ class Printer extends EventEmitter {
   async setup() {
     const browser = await puppeteer.launch({
       headless: this.headless,
-      args: this.allowLocal ? ['--allow-file-access-from-files', '--disable-dev-shm-usage'] : ['--disable-dev-shm-usage'],
+      args: this.allowLocal ? ["--allow-file-access-from-files", "--disable-dev-shm-usage"] : ["--disable-dev-shm-usage"],
       ignoreHTTPSErrors: true
     });
 
@@ -54,10 +51,10 @@ class Printer extends EventEmitter {
         uri = new URL(input);
         if (uri.protocol === "https:") {
           html = await fetch(input)
-            .then(res => res.text())
+            .then(res => res.text());
         }
         url = input;
-      } catch {
+      } catch (error) {
         let relativePath = path.resolve(dir, input);
         url = "file://" + relativePath;
       }
@@ -101,15 +98,15 @@ class Printer extends EventEmitter {
       path: scriptPath
     });
 
-    // await page.exposeFunction('PuppeteerLogger', (msg) => {
+    // await page.exposeFunction("PuppeteerLogger", (msg) => {
     //   console.log(msg);
     // });
 
-    await page.exposeFunction('onSize', (size) => {
+    await page.exposeFunction("onSize", (size) => {
       this.emit("size", size);
     });
 
-    await page.exposeFunction('onPage', (page) => {
+    await page.exposeFunction("onPage", (page) => {
       // console.log("page", page.position + 1);
 
       this.pages.push(page);
@@ -117,7 +114,7 @@ class Printer extends EventEmitter {
       this.emit("page", page);
     });
 
-    await page.exposeFunction('onRendered', (msg, width, height, orientation) => {
+    await page.exposeFunction("onRendered", (msg, width, height, orientation) => {
       this.emit("rendered", msg, width, height, orientation);
       resolver({msg, width, height, orientation});
     });
@@ -146,7 +143,7 @@ class Printer extends EventEmitter {
             x: getPointsValue(cropbox.x) - getPointsValue(mediabox.x),
             y: getPointsValue(cropbox.y) - getPointsValue(mediabox.y)
           }
-        }
+        };
 
         window.onPage({ id, width, height, startToken, endToken, breakAfter, breakBefore, position, boxes });
       });
@@ -173,7 +170,7 @@ class Printer extends EventEmitter {
   async _parseOutline(page, tags) {
     return await page.evaluate((tags) => {
       const tagsToProcess = [];
-      for (const node of document.querySelectorAll(tags.join(','))) {
+      for (const node of document.querySelectorAll(tags.join(","))) {
         tagsToProcess.push(node);
       }
       tagsToProcess.reverse();
@@ -212,8 +209,8 @@ class Printer extends EventEmitter {
         for (const child of node.children) {
           stripParentProperty(child);
         }
-      }
-      stripParentProperty(root)
+      };
+      stripParentProperty(root);
       return root.children;
     }, tags);
   }
@@ -233,7 +230,7 @@ class Printer extends EventEmitter {
         if (tag.name) {
           meta[tag.name] = tag.content;
         }
-      })
+      });
       return meta;
     });
 
@@ -252,7 +249,7 @@ class Printer extends EventEmitter {
         bottom: 0,
         left: 0,
       }
-    }
+    };
 
     let pdf = await page.pdf(settings)
       .catch((e) => {

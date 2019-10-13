@@ -1,9 +1,9 @@
 const PDFLib = require("pdf-lib");
 
-const isFunction = require( 'lodash/isFunction' );
-const last = require( 'lodash/last' );
-const sortBy = require( 'lodash/sortBy' );
-const PDFXRefTableFactory  = require( 'pdf-lib/lib/core/pdf-structures/factories/PDFXRefTableFactory' ).default;
+const isFunction = require( "lodash/isFunction" );
+const last = require( "lodash/last" );
+const sortBy = require( "lodash/sortBy" );
+const PDFXRefTableFactory  = require( "pdf-lib/lib/core/pdf-structures/factories/PDFXRefTableFactory" ).default;
 
 const createIndirectObjectsFromIndex = ({ index }) => {
   let catalogRef;
@@ -45,7 +45,7 @@ class PDFDocumentWriter extends PDFLib.PDFDocumentWriter {
       nonStreamObjects,
     } = createIndirectObjectsFromIndex(pdfDoc.index);
 
-    if (!catalogRef) error('Missing PDFCatalog');
+    if (!catalogRef) console.error("Missing PDFCatalog");
     streamObjects.forEach((streamObj) => {
       if (isFunction(streamObj.pdfObject.encode)) streamObj.pdfObject.encode();
     });
@@ -53,7 +53,7 @@ class PDFDocumentWriter extends PDFLib.PDFDocumentWriter {
     const merged = [...streamObjects, ...nonStreamObjects];
 
     const offsets = computeOffsets(pdfDoc.header.bytesSize(), merged);
-    const sortedOffsets = sortBy(offsets, 'objectNumber');
+    const sortedOffsets = sortBy(offsets, "objectNumber");
 
     /* ===== (2) Create XRefTable and Trailer ===== */
     const table = PDFXRefTableFactory.forOffsets(sortedOffsets);
@@ -74,6 +74,8 @@ class PDFDocumentWriter extends PDFLib.PDFDocumentWriter {
     const bufferSize = tableOffset + table.bytesSize() + trailer.bytesSize();
     const buffer = new Uint8Array(bufferSize);
 
+    /* eslint-disable no-unused-vars */
+    // TODO: how is remaining used?
     let remaining = pdfDoc.header.copyBytesInto(buffer);
     remaining = merged.reduce(
       (remBytes, indirectObj) => indirectObj.copyBytesInto(remBytes),
@@ -81,6 +83,7 @@ class PDFDocumentWriter extends PDFLib.PDFDocumentWriter {
     );
     remaining = table.copyBytesInto(remaining);
     remaining = trailer.copyBytesInto(remaining);
+    /* eslint-enable no-unused-vars */
 
     return buffer;
   }

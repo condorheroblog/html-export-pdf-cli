@@ -1,16 +1,16 @@
 const PDFLib = require("pdf-lib");
-const EventEmitter = require('events');
+const EventEmitter = require("events");
 
-const PDFDocumentWriter = require('./writer');
+const PDFDocumentWriter = require("./writer");
 
 class PostProcesser extends EventEmitter {
   constructor(pdf) {
     super();
 
     if (!pdf) {
-      throw "Must pass a PDF Buffer to PostProcesser"
+      throw "Must pass a PDF Buffer to PostProcesser";
     }
-    this.pdf = pdf
+    this.pdf = pdf;
     this.pdfDoc = PDFLib.PDFDocumentFactory.load(pdf);
   }
 
@@ -58,7 +58,7 @@ class PostProcesser extends EventEmitter {
       modDate: info.getMaybe("ModDate") && info.getMaybe("ModDate").string,
       creator: info.getMaybe("Creator") && info.getMaybe("Creator").string,
       producer: info.getMaybe("Producer") && info.getMaybe("Producer").string
-    }
+    };
   }
 
   updateInfoDict(meta) {
@@ -100,9 +100,9 @@ class PostProcesser extends EventEmitter {
   }
 
   addXmpMetadata(meta) {
-    const charCodes = (str) => str.split('').map((c) => c.charCodeAt(0));
+    const charCodes = (str) => str.split("").map((c) => c.charCodeAt(0));
     const typedArrayFor = (str) => new Uint8Array(charCodes(str));
-    const whitespacePadding = new Array(20).fill(' '.repeat(100)).join('\n');
+    const whitespacePadding = new Array(20).fill(" ".repeat(100)).join("\n");
     const metadataXML = `
       <?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
         <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.2-c001 63.139439, 2010/09/27-13:37:26">
@@ -124,7 +124,7 @@ class PostProcesser extends EventEmitter {
                 <rdf:Bag>
                   ${meta.keywords
                     .map((keyword) => `<rdf:li>${keyword}</rdf:li>`)
-                    .join('\n')}
+                    .join("\n")}
                 </rdf:Bag>
               </dc:subject>
             </rdf:Description>
@@ -149,8 +149,8 @@ class PostProcesser extends EventEmitter {
 
     const metadataStreamDict = PDFLib.PDFDictionary.from(
       {
-        Type: PDFLib.PDFName.from('Metadata'),
-        Subtype: PDFLib.PDFName.from('XML'),
+        Type: PDFLib.PDFName.from("Metadata"),
+        Subtype: PDFLib.PDFName.from("XML"),
         Length: PDFLib.PDFNumber.fromNumber(metadataXML.length),
       },
       this.pdfDoc.index,
@@ -163,8 +163,8 @@ class PostProcesser extends EventEmitter {
 
     const metadataStreamRef = this.pdfDoc.register(metadataStream);
 
-    this.pdfDoc.catalog.set('Metadata', metadataStreamRef);
-  };
+    this.pdfDoc.catalog.set("Metadata", metadataStreamRef);
+  }
 
   boxes(pages) {
     const pdfPages = this.pdfDoc.getPages();
@@ -205,17 +205,17 @@ class PostProcesser extends EventEmitter {
 
   /**
    * Adds a table of content to the generated PDF
-   * 
+   *
    * Ideally this would not be required if Chromium would add this directly.
    * So if these bugs are closed this can probably be removed again:
    * - https://bugs.chromium.org/p/chromium/issues/detail?id=840455
    * - https://github.com/GoogleChrome/puppeteer/issues/1778
-   * 
+   *
    * This code is heavily based on @Hopding's comment at:
    * https://github.com/Hopding/pdf-lib/issues/127#issuecomment-502450179
    */
   addOutline(outlineSpec) {
-    const outline = JSON.parse(JSON.stringify(outlineSpec))
+    const outline = JSON.parse(JSON.stringify(outlineSpec));
 
 
     const pageRefs = [];
@@ -234,7 +234,7 @@ class PostProcesser extends EventEmitter {
         count += countOutlineLayer(outlineEntry.children);
       }
       return count;
-    }
+    };
 
     const createItemsForOutlineLayer = (layer, parent) => {
       layer.forEach((outlineItem, i) => {
@@ -243,13 +243,13 @@ class PostProcesser extends EventEmitter {
         const pdfItem = createOutlineItem(outlineItem, prev, next, parent);
         index.assign(outlineItem.ref, pdfItem);
       });
-    }
+    };
 
     const createOutlineItem = (outlineItem, prev, next, parent) => {
       if (!outlineItem.id) {
         throw new Error(`Cannot generate outline item with title '${outlineItem.title} ` +
-                        `without any target anchor. Please specify an 'id' attribute for ` +
-                        `the relevant HTML element`);
+                        "without any target anchor. Please specify an 'id' attribute for " +
+                        "the relevant HTML element");
       }
       const item = {
         Title: PDFLib.PDFString.fromString(outlineItem.title),
@@ -277,14 +277,14 @@ class PostProcesser extends EventEmitter {
       for (const child of outlineEntry.children) {
         createOutlineReferences(child);
       }
-    }
+    };
 
     for (const outlineItem of outline) {
       createOutlineReferences(outlineItem);
     }
 
     createItemsForOutlineLayer(outline, outlineReference);
-    
+
     const pdfOutline = PDFLib.PDFDictionary.from(
       {
         First: outline[0].ref,
@@ -294,7 +294,7 @@ class PostProcesser extends EventEmitter {
       index,
     );
     index.assign(outlineReference, pdfOutline);
-    this.pdfDoc.catalog.set('Outlines', outlineReference);
+    this.pdfDoc.catalog.set("Outlines", outlineReference);
   }
 
   save() {

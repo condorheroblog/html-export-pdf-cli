@@ -1,36 +1,36 @@
 #!/usr/bin/env node
-const program = require('commander');
-const ora = require('ora');
+const program = require("commander");
+const ora = require("ora");
 const Printer = require("../");
-const path = require('path');
-const fs = require('fs');
-const { promisify } = require('util');
-const writeFileAsync = promisify(fs.writeFile);
-const replaceExt = require('replace-ext');
+const path = require("path");
+const fs = require("fs");
+// const { promisify } = require("util");
+// const writeFileAsync = promisify(fs.writeFile);
+const replaceExt = require("replace-ext");
 
 program
-  .version(require('../package.json').version)
-  .arguments('[inputPath]')
-  .option('-i, --inputs [inputs]', 'Inputs')
-  .option('-o, --output [output]', 'Output')
-  .option('-d, --debug', 'Debug')
-  .option('-l, --landscape', 'Landscape printing', false)
-  .option('-s, --page-size [size]', 'Print to Page Size [size]')
-  .option('-w, --width [size]', 'Print to Page Width [width] in MM')
-  .option('-h --height [size]', 'Print to Page Height [weight] in MM')
-  // .option('-m, --page-margin [margin]', 'Print with margin [margin]')
-  // .option('-n, --hyphenate [lang]', 'Hyphenate with language [language], defaults to "en-us"')
-  // .option('-hi, --hypher_ignore [str]', 'Ignore passed element selectors, such as ".class_to_ignore, h1"')
-  // .option('-ho, --hypher_only [str]', 'Only hyphenate passed elements selector, such as ".hyphenate, aside"')
-  // .option('-e, --encoding [type]', 'Set the encoding of the input html, defaults to "utf-8"')
-  .option('-t, --timeout [ms]', 'Set a max timeout of [ms]')
-  .option('-x, --html', 'output html file')
-  .option('-b, --blockLocal', 'Disallow access to filesystem for local files')
-  .option('--outline-tags [tags]', 'Specifies that an outline should be ' +
-          'generated for the resulting PDF document. [tags] specifies which ' +
-          'HTML tags should be considered for that outline. ' +
-          '"h1,h2" will trigger an outline with "h1" tags as root elements ' +
-          'and "h2" elements as their childs.')
+  .version(require("../package.json").version)
+  .arguments("[inputPath]")
+  .option("-i, --inputs [inputs]", "Inputs")
+  .option("-o, --output [output]", "Output")
+  .option("-d, --debug", "Debug")
+  .option("-l, --landscape", "Landscape printing", false)
+  .option("-s, --page-size [size]", "Print to Page Size [size]")
+  .option("-w, --width [size]", "Print to Page Width [width] in MM")
+  .option("-h --height [size]", "Print to Page Height [weight] in MM")
+  // .option("-m, --page-margin [margin]", "Print with margin [margin]")
+  // .option("-n, --hyphenate [lang]", "Hyphenate with language [language], defaults to "en-us"")
+  // .option("-hi, --hypher_ignore [str]", "Ignore passed element selectors, such as ".class_to_ignore, h1"")
+  // .option("-ho, --hypher_only [str]", "Only hyphenate passed elements selector, such as ".hyphenate, aside"")
+  // .option("-e, --encoding [type]", "Set the encoding of the input html, defaults to "utf-8"")
+  .option("-t, --timeout [ms]", "Set a max timeout of [ms]")
+  .option("-x, --html", "output html file")
+  .option("-b, --blockLocal", "Disallow access to filesystem for local files")
+  .option("--outline-tags [tags]", "Specifies that an outline should be " +
+          "generated for the resulting PDF document. [tags] specifies which " +
+          "HTML tags should be considered for that outline. " +
+          "\"h1,h2\" will trigger an outline with \"h1\" tags as root elements " +
+          "and \"h2\" elements as their childs.")
   .parse(process.argv);
 
 
@@ -38,19 +38,17 @@ let input = program.inputs || program.args[0];
 
 let dir = process.cwd();
 
-let url;
 let relativePath;
 let allowLocal;
 try {
-  url = new URL(input);
+  new URL(input);
   allowLocal = false;
-} catch {
+} catch (error) {
   relativePath = path.resolve(dir, input);
   allowLocal = !program.blockLocal;
 }
 
 let output;
-let tmpFile, tmpPath;
 
 let headless = typeof program.debug === "undefined";
 
@@ -64,7 +62,7 @@ if (!input) {
 
 if (relativePath) {
 
-  if (['.html', '.xhtml'].indexOf(path.extname(relativePath)) === -1) {
+  if ([".html", ".xhtml"].indexOf(path.extname(relativePath)) === -1) {
     console.error("Must pass a html or xhtml file as input");
     return process.exit(1);
   }
@@ -80,7 +78,7 @@ if (relativePath) {
 if (typeof(program.output) === "string") {
   output = path.resolve(dir, program.output);
 } else if (typeof(program.output) !== "undefined") {
-  output = './' + replaceExt(path.basename(input), '.pdf');
+  output = "./" + replaceExt(path.basename(input), ".pdf");
 } else {
   output = "output.pdf";
 }
@@ -88,7 +86,7 @@ if (typeof(program.output) === "string") {
 
 const spinner = ora({
   spinner: "circleQuarters"
-})
+});
 
 
 if (typeof input === "string") {
@@ -106,7 +104,7 @@ if (typeof input === "string") {
 
       spinner.start("Rendering: Page " + (page.position + 1));
     } else {
-      spinner.text = "Rendering: Page " + (page.position + 1)
+      spinner.text = "Rendering: Page " + (page.position + 1);
     }
   });
 
@@ -125,9 +123,9 @@ if (typeof input === "string") {
     let options = {};
     if (program.html) {
       file = await printer.html(input, options);
-      output = replaceExt(output, '.html');
+      output = replaceExt(output, ".html");
     } else {
-      options.outlineTags = !program.outlineTags ? [] : program.outlineTags.split(',');
+      options.outlineTags = !program.outlineTags ? [] : program.outlineTags.split(",");
       file = await printer.pdf(input, options);
     }
   } else {
