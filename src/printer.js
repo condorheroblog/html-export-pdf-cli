@@ -16,18 +16,6 @@ let scriptPath = paths[0] + "node_modules" + paths[paths.length-1];
 
 const PostProcesser = require('./postprocesser');
 
-const PDF_SETTINGS = {
-  printBackground: true,
-  displayHeaderFooter: false,
-  preferCSSPageSize: true,
-  margin: {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  }
-};
-
 class Printer extends EventEmitter {
   constructor(headless, allowLocal) {
     super();
@@ -266,7 +254,7 @@ class Printer extends EventEmitter {
       }
     }
 
-    let pdf = await page.pdf(PDF_SETTINGS)
+    let pdf = await page.pdf(settings)
       .catch((e) => {
         console.error(e);
       });

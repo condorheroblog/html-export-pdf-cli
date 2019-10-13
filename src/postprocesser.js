@@ -184,10 +184,10 @@ class PostProcesser extends EventEmitter {
 
       const rectangle = PDFLib.PDFArray.fromArray(
           [
-            PDFLib.PDFNumber.fromNumber(boxes.crop.x * 2),
-            PDFLib.PDFNumber.fromNumber(boxes.crop.y * 2),
-            PDFLib.PDFNumber.fromNumber(boxes.crop.width),
-            PDFLib.PDFNumber.fromNumber(boxes.crop.height),
+            PDFLib.PDFNumber.fromNumber(boxes.crop.x),
+            PDFLib.PDFNumber.fromNumber(boxes.crop.y),
+            PDFLib.PDFNumber.fromNumber(boxes.crop.width + boxes.crop.x),
+            PDFLib.PDFNumber.fromNumber(boxes.crop.height + boxes.crop.y),
           ],
           pdfPage.index,
         );
