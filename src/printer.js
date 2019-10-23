@@ -14,11 +14,12 @@ let scriptPath = paths[0] + "node_modules" + paths[paths.length-1];
 const PostProcesser = require("./postprocesser");
 
 class Printer extends EventEmitter {
-  constructor(headless, allowLocal) {
+  constructor(headless, allowLocal, additionalScripts) {
     super();
     this.headless = headless !== false;
     this.allowLocal = allowLocal;
     this.pages = [];
+    this.additionalScripts = additionalScripts;
   }
 
   async setup() {
@@ -97,6 +98,12 @@ class Printer extends EventEmitter {
     await page.addScriptTag({
       path: scriptPath
     });
+
+    for (const script of this.additionalScripts) {
+      await page.addScriptTag({
+        path: script
+      });
+    }
 
     // await page.exposeFunction("PuppeteerLogger", (msg) => {
     //   console.log(msg);
