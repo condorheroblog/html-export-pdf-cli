@@ -75,6 +75,15 @@ mocha
 ```
 
 ## Docker
+
+Build the Docker image
+
 ```bash
-docker run -it -P -v $(pwd):/usr/src/pagedjs-cli fchasen/pagedjs-cli bash
+docker build -t pagedmedia/pagedjs-cli .
+```
+
+Run the Docker image
+
+```bash
+docker run -it --security-opt 'seccomp=seccomp.json' pagedmedia/pagedjs-cli bash
 ```
