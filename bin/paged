@@ -49,7 +49,7 @@ let dir = process.cwd();
 let relativePath;
 let allowLocal;
 try {
-  new URL(input);
+  input = new URL(input);
   allowLocal = false;
 } catch (error) {
   relativePath = path.resolve(dir, input);
