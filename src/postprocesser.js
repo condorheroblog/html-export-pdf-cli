@@ -192,9 +192,7 @@ class PostProcesser extends EventEmitter {
           pdfPage.index,
         );
 
-      // pdfPage.set("ArtBox", rectangle);
-      pdfPage.set("TrimBox", rectangle);
-      pdfPage.set("CropBox", rectangle);
+        pdfPage.set("TrimBox", rectangle);
     });
 
   }
