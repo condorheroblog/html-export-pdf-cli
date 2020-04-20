@@ -17,23 +17,28 @@ pagedjs-cli ./path/to/index.html -o result.pdf
 ## Options
 
 ```
--h, --help                    output usage information
--V, --version                 output the version number
--i, --inputs [inputs]         Inputs
--o, --output [output]         Output
--d, --debug                   Show Electron Window to Debug
--l, --landscape               Landscape printing
--s, --page-size [size]        Print to Page Size [size]
--w, --width [size]            Print to Page Width [width]
--h --height [size]            Print to Page Height [weight]
--m, --page-margin [margin]    Print with margin [margin]
--n, --hyphenate [lang]        Hyphenate with language [language], defaults to "en-us"
--hi, --hypher_ignore [str]    Ignore passed element selectors, such as ".class_to_ignore, h1"
--ho, --hypher_only [str]      Only hyphenate passed elements selector, such as ".hyphenate, aside"
--e, --encoding [type]         Set the encoding of the input html, defaults to "utf-8"
--t, --timeout [ms]            Set a max timeout of [ms]
---outline-tags [tags]         Specifies that an outline should be generated for the resulting PDF document. [tags] specifies which HTML tags should be considered for that outline. "h1,h2" will trigger an outline with "h1" tags as root elements and "h2" elements as their childs.
---additional-script <script>  Additional script tags which are added to the HTML document before rendering. This is useful for adding custom pagedjs handlers. The option can be repeated. (default: [])
+-V, --version                     output the version number
+-i, --inputs [inputs]             Inputs
+-o, --output [output]             Output
+-d, --debug                       Debug
+-l, --landscape                   Landscape printing (default: false)
+-s, --page-size [size]            Print to Page Size [size]
+-w, --width [size]                Print to Page Width [width] in MM
+-h --height [size]                Print to Page Height [weight] in MM
+-t, --timeout [ms]                Set a max timeout of [ms]
+-x, --html                        output html file
+-b, --blockLocal                  Disallow access to filesystem for local files
+-r, --blockRemote                 Disallow requests to remote servers
+--allowedPath [allowedPaths]      Only allow access to given filesystem paths, repeatable. (default: [])
+--allowedDomain [allowedDomains]  Only allow access to given remote domains, repeatable (default: [])
+--outline-tags [tags]             Specifies that an outline should be generated for the resulting PDF
+                                  document. [tags] specifies which HTML tags should be considered for that
+                                  outline. "h1,h2" will trigger an outline with "h1" tags as root elements
+                                  and "h2" elements as their childs.
+--additional-script <script>      Additional script tags which are added to the HTML document before
+                                  rendering. This is useful for adding custom pagedjs handlers. The option
+                                  can be repeated. (default: [])
+--browserEndpoint                 Use a remote Chrome server with browserWSEndpoint
 ```
 
 ## Hyphenation

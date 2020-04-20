@@ -14,20 +14,37 @@ let scriptPath = paths[0] + "node_modules" + paths[paths.length-1];
 const PostProcesser = require("./postprocesser");
 
 class Printer extends EventEmitter {
-  constructor(headless, allowLocal, additionalScripts) {
+  constructor(options = {}) {
     super();
-    this.headless = headless !== false;
-    this.allowLocal = allowLocal;
+
+    this.headless = options.headless !== false;
+    this.allowLocal = options.allowLocal;
+    this.allowRemote = options.allowRemote;
+    this.additionalScripts = options.additionalScripts;
+    this.allowedPaths = options.allowedPaths || [];
+    this.allowedDomains = options.allowedDomains || [];
+    this.ignoreHTTPSErrors = options.ignoreHTTPSErrors;
+    this.browserWSEndpoint = options.browserEndpoint;
+
     this.pages = [];
-    this.additionalScripts = additionalScripts;
   }
 
   async setup() {
-    const browser = await puppeteer.launch({
+    let puppeteerOptions = {
       headless: this.headless,
-      args: this.allowLocal ? ["--allow-file-access-from-files", "--disable-dev-shm-usage"] : ["--disable-dev-shm-usage"],
-      ignoreHTTPSErrors: true
-    });
+      args: ["--disable-dev-shm-usage"],
+      ignoreHTTPSErrors: this.ignoreHTTPSErrors
+    }
+
+    if (this.allowLocal) {
+      puppeteerOptions.args.push("--allow-file-access-from-files");
+    }
+
+    if (this.browserWSEndpoint) {
+      puppeteerOptions.browserWSEndpoint = this.browserWSEndpoint;
+    }
+
+    const browser = await puppeteer.launch(puppeteerOptions);
 
     this.browser = browser;
 
@@ -46,23 +63,49 @@ class Printer extends EventEmitter {
 
     const page = await this.browser.newPage();
 
-    let uri, url, html;
+    let uri, url, relativePath, html;
     if (typeof input === "string") {
       try {
         uri = new URL(input);
-        if (uri.protocol === "https:") {
-          html = await fetch(input)
-            .then(res => res.text());
-        }
         url = input;
       } catch (error) {
-        let relativePath = path.resolve(dir, input);
+        relativePath = path.resolve(dir, input);
         url = "file://" + relativePath;
       }
     } else {
       url = input.url;
       html = input.html;
     }
+
+    await page.setRequestInterception(true);
+
+    page.on('request', (request) => {
+      let uri = new URL(request.url());
+      let { host, protocol, pathname } = uri;
+      let local = protocol === "file:"
+
+      if (local && this.withinAllowedPath(pathname) === false) {
+        request.abort();
+        return;
+      }
+
+      if (local && !this.allowLocal) {
+        request.abort();
+        return;
+      }
+
+      if (host && this.isAllowedDomain(host) === false) {
+        request.abort();
+        return;
+      }
+
+      if (host && !this.allowRemote) {
+        request.abort();
+        return;
+      }
+
+      request.continue();
+    });
 
     if (html) {
       await page.setContent(html)
@@ -297,6 +340,28 @@ class Printer extends EventEmitter {
 
   async close() {
     return this.browser.close();
+  }
+
+  withinAllowedPath(pathname) {
+    if (!this.allowedPaths || this.allowedPaths.length === 0) {
+      return true;
+    }
+
+    for (let parent of this.allowedPaths) {
+      const relative = path.relative(parent, pathname);
+      if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  isAllowedDomain(domain) {
+    if (!this.allowedDomains || this.allowedDomains.length === 0) {
+      return true;
+    }
+    return this.allowedDomains.includes(domain);
   }
 
 }
