@@ -25,6 +25,7 @@ class Printer extends EventEmitter {
     this.allowedDomains = options.allowedDomains || [];
     this.ignoreHTTPSErrors = options.ignoreHTTPSErrors;
     this.browserWSEndpoint = options.browserEndpoint;
+    this.overrideDefaultBackgroundColor = options.overrideDefaultBackgroundColor;
 
     this.pages = [];
   }
@@ -34,7 +35,7 @@ class Printer extends EventEmitter {
       headless: this.headless,
       args: ["--disable-dev-shm-usage"],
       ignoreHTTPSErrors: this.ignoreHTTPSErrors
-    }
+    };
 
     if (this.allowLocal) {
       puppeteerOptions.args.push("--allow-file-access-from-files");
@@ -62,6 +63,10 @@ class Printer extends EventEmitter {
     }
 
     const page = await this.browser.newPage();
+
+    if (this.overrideDefaultBackgroundColor) {
+      page._client.send('Emulation.setDefaultBackgroundColorOverride', { color: this.overrideDefaultBackgroundColor });
+    }
 
     let uri, url, relativePath, html;
     if (typeof input === "string") {

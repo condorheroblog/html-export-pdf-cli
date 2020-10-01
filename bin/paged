@@ -18,6 +18,7 @@ program
   .option("-s, --page-size [size]", "Print to Page Size [size]")
   .option("-w, --width [size]", "Print to Page Width [width] in MM")
   .option("-h --height [size]", "Print to Page Height [weight] in MM")
+  .option("--forceTransparentBackground", "Print with transparent background")
   // .option("-m, --page-margin [margin]", "Print with margin [margin]")
   // .option("-n, --hyphenate [lang]", "Hyphenate with language [language], defaults to "en-us"")
   // .option("-hi, --hypher_ignore [str]", "Ignore passed element selectors, such as ".class_to_ignore, h1"")
@@ -107,14 +108,20 @@ if (typeof input === "string") {
 }
 
 (async () => {
-  let printer = new Printer({
+  const printerOptions = {
     headless: headless,
     allowLocal: allowLocal,
     allowRemote: !program.blockRemote,
     allowedPaths: program.allowedPaths,
     allowedDomains: program.allowedDomains,
     additionalScripts: program.additionalScript,
-  });
+  };
+
+  if (program.forceTransparentBackground) {
+    printerOptions.overrideDefaultBackgroundColor = { r: 0, g: 0, b: 0, a: 0 }; // Workaround to get a transparent background in the resulting PDF. See https://bugs.chromium.org/p/chromium/issues/detail?id=498892 for more information.
+  }
+
+  let printer = new Printer(printerOptions);
 
   printer.on("page", (page) => {
     if (page.position === 0) {
