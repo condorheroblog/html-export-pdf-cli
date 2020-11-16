@@ -39,7 +39,7 @@ program
           "added to the HTML document before rendering. This is useful for " +
           "adding custom pagedjs handlers. The option can be repeated.",
           collect, [])
-  .option("--browserEndpoint", "Use a remote Chrome server with browserWSEndpoint")
+  .option("--browserEndpoint <browserEndpoint>", "Use a remote Chrome server with browserWSEndpoint")
   .parse(process.argv);
 
 function collect(value, previous) {
@@ -115,6 +115,7 @@ if (typeof input === "string") {
     allowedPaths: program.allowedPaths,
     allowedDomains: program.allowedDomains,
     additionalScripts: program.additionalScript,
+    browserEndpoint: program.browserEndpoint
   };
 
   if (program.forceTransparentBackground) {
