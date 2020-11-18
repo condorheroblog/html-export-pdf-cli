@@ -78,7 +78,12 @@ class Printer extends EventEmitter {
         url = input;
       } catch (error) {
         relativePath = path.resolve(dir, input);
-        url = "file://" + relativePath;
+
+        if (this.browserWSEndpoint) {
+          html = fs.readFileSync(relativePath, 'utf-8')
+        } else {
+          url = "file://" + relativePath;
+        }
       }
     } else {
       url = input.url;
