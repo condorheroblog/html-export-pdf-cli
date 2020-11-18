@@ -3,6 +3,7 @@ const puppeteer = require("puppeteer");
 const fetch = require("node-fetch");
 
 const path = require("path");
+const fs = require("fs");
 
 let dir = process.cwd();
 
