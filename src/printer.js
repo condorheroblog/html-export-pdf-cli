@@ -174,7 +174,7 @@ class Printer extends EventEmitter {
       resolver({msg, width, height, orientation});
     });
 
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       window.PagedPolyfill.on("page", (page) => {
         const { id, width, height, startToken, endToken, breakAfter, breakBefore, position } = page;
 
@@ -212,7 +212,15 @@ class Printer extends EventEmitter {
         window.onRendered(msg, flow.width, flow.height, flow.orientation);
       });
 
-      window.PagedPolyfill.preview();
+      if (window.PagedConfig.before) {
+        await window.PagedConfig.before();
+      }
+
+      done = await window.PagedPolyfill.preview();
+
+      if (window.PagedConfig.after) {
+        await window.PagedConfig.after(done);
+      }
     });
 
     await rendered;
