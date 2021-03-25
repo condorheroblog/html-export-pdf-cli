@@ -175,6 +175,7 @@ class Printer extends EventEmitter {
     });
 
     await page.evaluate(async () => {
+		  let done;
       window.PagedPolyfill.on("page", (page) => {
         const { id, width, height, startToken, endToken, breakAfter, breakBefore, position } = page;
 
