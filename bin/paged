@@ -115,6 +115,7 @@ if (typeof input === "string") {
     allowedPaths: program.allowedPaths,
     allowedDomains: program.allowedDomains,
     additionalScripts: program.additionalScript,
+    timeout: program.timeout,
   };
 
   if (program.forceTransparentBackground) {
