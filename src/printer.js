@@ -3,6 +3,7 @@ const puppeteer = require("puppeteer");
 const fetch = require("node-fetch");
 
 const path = require("path");
+const fs = require("fs");
 
 let dir = process.cwd();
 
@@ -44,13 +45,12 @@ class Printer extends EventEmitter {
 
     if (this.browserWSEndpoint) {
       puppeteerOptions.browserWSEndpoint = this.browserWSEndpoint;
+      this.browser = await puppeteer.connect(puppeteerOptions);
+    } else {
+      this.browser = await puppeteer.launch(puppeteerOptions);
     }
 
-    const browser = await puppeteer.launch(puppeteerOptions);
-
-    this.browser = browser;
-
-    return browser;
+    return this.browser;
   }
 
   async render(input) {
@@ -79,7 +79,12 @@ class Printer extends EventEmitter {
         url = input;
       } catch (error) {
         relativePath = path.resolve(dir, input);
-        url = "file://" + relativePath;
+
+        if (this.browserWSEndpoint) {
+          html = fs.readFileSync(relativePath, 'utf-8')
+        } else {
+          url = "file://" + relativePath;
+        }
       }
     } else {
       url = input.url;
