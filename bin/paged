@@ -8,6 +8,10 @@ const fs = require("fs");
 // const writeFileAsync = promisify(fs.writeFile);
 const replaceExt = require("replace-ext");
 
+function commaSeparatedList(value) {
+  return value.split(',');
+}
+
 program
   .version(require("../package.json").version)
   .arguments("[inputPath]")
@@ -40,6 +44,7 @@ program
           "adding custom pagedjs handlers. The option can be repeated.",
           collect, [])
   .option("--browserEndpoint <browserEndpoint>", "Use a remote Chrome server with browserWSEndpoint")
+  .option("--browserArgs <browserArgs>", "Launch Chrome with comma separated args", commaSeparatedList)
   .parse(process.argv);
 
 function collect(value, previous) {
@@ -117,6 +122,7 @@ if (typeof input === "string") {
     additionalScripts: program.additionalScript,
     browserEndpoint: program.browserEndpoint,
     timeout: program.timeout,
+    browserArgs: program.browserArgs
   };
 
   if (program.forceTransparentBackground) {

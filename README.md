@@ -39,6 +39,7 @@ pagedjs-cli ./path/to/index.html -o result.pdf
                                   rendering. This is useful for adding custom pagedjs handlers. The option
                                   can be repeated. (default: [])
 --browserEndpoint                 Use a remote Chrome server with browserWSEndpoint
+--browserArgs <browserArgs>       Additional comma separated flags for browser
 ```
 
 ## Hyphenation
