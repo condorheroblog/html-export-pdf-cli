@@ -26,6 +26,7 @@ class Printer extends EventEmitter {
     this.allowedDomains = options.allowedDomains || [];
     this.ignoreHTTPSErrors = options.ignoreHTTPSErrors;
     this.browserWSEndpoint = options.browserEndpoint;
+    this.browserArgs = options.browserArgs;
     this.overrideDefaultBackgroundColor = options.overrideDefaultBackgroundColor;
     this.timeout = options.timeout;
 
@@ -41,6 +42,10 @@ class Printer extends EventEmitter {
 
     if (this.allowLocal) {
       puppeteerOptions.args.push("--allow-file-access-from-files");
+    }
+
+    if (this.browserArgs) {
+      puppeteerOptions.args.push(...this.browserArgs);
     }
 
     if (this.browserWSEndpoint) {
