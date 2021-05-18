@@ -25,6 +25,7 @@ pagedjs-cli ./path/to/index.html -o result.pdf
 -s, --page-size [size]            Print to Page Size [size]
 -w, --width [size]                Print to Page Width [width] in MM
 -h --height [size]                Print to Page Height [weight] in MM
+--forceTransparentBackground      Print with transparent background
 -t, --timeout [ms]                Set a max timeout of [ms]
 -x, --html                        output html file
 -b, --blockLocal                  Disallow access to filesystem for local files
