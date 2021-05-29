@@ -24,7 +24,7 @@
     "mathjax": "^3.1.0",
     "node-fetch": "^2.6.0",
     "ora": "^5.0.0",
-    "pagedjs": "0.1.43",
+    "pagedjs": "^0.2.0",
     "pdf-lib": "0.6.4",
     "puppeteer": "^5.2.1",
     "replace-ext": "^2.0.0"
