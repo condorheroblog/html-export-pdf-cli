@@ -16,20 +16,20 @@
   },
   "main": "index.js",
   "dependencies": {
-    "commander": "^6.1.0",
+    "commander": "^8.2.0",
     "express": "^4.17.1",
-    "hyphenopoly": "^4.7.0",
-    "katex": "^0.12.0",
-    "lodash": "^4.17.20",
-    "mathjax": "^3.1.0",
+    "hyphenopoly": "^4.12.0",
+    "katex": "^0.13.18",
+    "lodash": "^4.17.21",
+    "mathjax": "^3.2.0",
     "node-fetch": "^2.6.0",
     "ora": "^5.0.0",
     "pagedjs": "^0.2.0",
     "pdf-lib": "0.6.4",
-    "puppeteer": "^5.2.1",
+    "puppeteer": "^10.4.0",
     "replace-ext": "^2.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.7.0"
+    "eslint": "^7.32.0"
   }
 }
