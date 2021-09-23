@@ -21,7 +21,7 @@ class Printer extends EventEmitter {
     this.headless = options.headless !== false;
     this.allowLocal = options.allowLocal;
     this.allowRemote = options.allowRemote;
-    this.additionalScripts = options.additionalScripts;
+    this.additionalScripts = options.additionalScripts || [];
     this.allowedPaths = options.allowedPaths || [];
     this.allowedDomains = options.allowedDomains || [];
     this.ignoreHTTPSErrors = options.ignoreHTTPSErrors;
