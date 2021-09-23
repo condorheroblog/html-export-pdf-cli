@@ -40,6 +40,21 @@ class PostProcesser extends EventEmitter {
       meta.producer = info.producer;
     }
 
+    // Display the title of the document in the title bar by default
+    // See PDF/UA 1: 7.1-9
+    // See Matterhorn Protocol 1.1: Indices 07-001 & 07-002
+    if (meta.title) {
+      this.pdfDoc.catalog.set("ViewerPreferences", 
+        new PDFLib.PDFDictionary({ DisplayDocTitle: PDFLib.PDFBoolean.fromBool(true) }, PDFLib.PDFObjectIndex.create()));
+    }
+
+    // Set the default language of the document
+    // See PDF/UA 1: 7.2-3
+    // See Matterhorn Protocol 1.1: Index 11-006
+    if (meta.lang) {
+      this.pdfDoc.catalog.set("Lang", PDFLib.PDFString.fromString(meta.lang)); 
+    }
+
     // Add meta
     this.addXmpMetadata(meta);
     this.updateInfoDict(meta);

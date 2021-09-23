@@ -36,7 +36,7 @@ class Printer extends EventEmitter {
   async setup() {
     let puppeteerOptions = {
       headless: this.headless,
-      args: ["--disable-dev-shm-usage"],
+      args: ["--disable-dev-shm-usage", "--export-tagged-pdf"],
       ignoreHTTPSErrors: this.ignoreHTTPSErrors
     };
 
@@ -302,6 +302,10 @@ class Printer extends EventEmitter {
       let title = document.querySelector("title");
       if (title) {
         meta.title = title.textContent.trim();
+      }
+      let lang = document.querySelector("html").getAttribute("lang");
+      if (lang) {
+        meta.lang = lang;
       }
       let metaTags = document.querySelectorAll("meta");
       [...metaTags].forEach((tag) => {
