@@ -3,6 +3,11 @@
 # https://hub.docker.com/r/library/node/tags/
 image: node:latest
 
+stages:
+  - test
+  - deploy
+  - publish
+
 # This folder is cached between builds
 # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
 cache:
@@ -23,3 +28,19 @@ pack:
   artifacts:
     paths:
     - ./*.tgz
+
+# This job requires to setup GitLab the following way:
+# 1. On https://www.npmjs.com/settings/tokens/create
+#     create a new read/write token (the logged in user must have write access for the `pagedjs` package)
+# 2. On https://gitlab.pagedmedia.org/tools/pagedjs/-/settings/ci_cd#js-cicd-variables-settings
+#     add a new variable named `NPM_TOKEN`, and toggle on _Protected_ and _Masked_
+npm-publish:
+  stage: publish
+  before_script:
+    - 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc'
+    - npm install
+    - npm publish --public --dry-run
+  script:
+    - npm publish --public
+  only:
+    - tags

@@ -51,7 +51,9 @@ function collect(value, previous) {
   return previous.concat(value);
 }
 
-let input = program.inputs || program.args[0];
+const options = program.opts();
+
+let input = options.inputs || program.args[0];
 
 let dir = process.cwd();
 
@@ -62,12 +64,12 @@ try {
   allowLocal = false;
 } catch (error) {
   relativePath = path.resolve(dir, input);
-  allowLocal = !program.blockLocal;
+  allowLocal = !options.blockLocal;
 }
 
 let output;
 
-let headless = typeof program.debug === "undefined";
+let headless = typeof options.debug === "undefined";
 
 // var hyphenator;
 // var hyphenateOptions;
@@ -92,9 +94,9 @@ if (relativePath) {
   }
 }
 
-if (typeof(program.output) === "string") {
-  output = path.resolve(dir, program.output);
-} else if (typeof(program.output) !== "undefined") {
+if (typeof(options.output) === "string") {
+  output = path.resolve(dir, options.output);
+} else if (typeof(options.output) !== "undefined") {
   output = "./" + replaceExt(path.basename(input), ".pdf");
 } else {
   output = "output.pdf";
@@ -116,16 +118,16 @@ if (typeof input === "string") {
   const printerOptions = {
     headless: headless,
     allowLocal: allowLocal,
-    allowRemote: !program.blockRemote,
-    allowedPaths: program.allowedPaths,
-    allowedDomains: program.allowedDomains,
-    additionalScripts: program.additionalScript,
-    browserEndpoint: program.browserEndpoint,
-    timeout: program.timeout,
-    browserArgs: program.browserArgs
+    allowRemote: !options.blockRemote,
+    allowedPaths: options.allowedPaths,
+    allowedDomains: options.allowedDomains,
+    additionalScripts: options.additionalScript,
+    browserEndpoint: options.browserEndpoint,
+    timeout: options.timeout,
+    browserArgs: options.browserArgs
   };
 
-  if (program.forceTransparentBackground) {
+  if (options.forceTransparentBackground) {
     printerOptions.overrideDefaultBackgroundColor = { r: 0, g: 0, b: 0, a: 0 }; // Workaround to get a transparent background in the resulting PDF. See https://bugs.chromium.org/p/chromium/issues/detail?id=498892 for more information.
   }
 
@@ -154,12 +156,20 @@ if (typeof input === "string") {
   let file;
   if (headless) {
     let options = {};
-    if (program.html) {
-      file = await printer.html(input, options);
+    if (options.html) {
+      file = await printer.html(input, options)
+        .catch((e) => {
+          console.error(e);
+          process.exit(1);
+        });
       output = replaceExt(output, ".html");
     } else {
-      options.outlineTags = !program.outlineTags ? [] : program.outlineTags.split(",");
-      file = await printer.pdf(input, options);
+      options.outlineTags = !options.outlineTags ? [] : options.outlineTags.split(",");
+      file = await printer.pdf(input, options)
+        .catch((e) => {
+          console.error(e);
+          process.exit(1);
+        });
     }
   } else {
     printer.preview(input);
