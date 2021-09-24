@@ -127,10 +127,7 @@ class Printer extends EventEmitter {
     });
 
     if (html) {
-      await page.setContent(html)
-        .catch((e) => {
-          console.error(e);
-        });
+      await page.setContent(html);
 
       if (url) {
         await page.evaluate((url) => {
@@ -144,10 +141,7 @@ class Printer extends EventEmitter {
       }
 
     } else {
-      await page.goto(url)
-        .catch((e) => {
-          console.error(e);
-        });
+      await page.goto(url);
     }
 
     await page.evaluate(() => {
@@ -189,7 +183,7 @@ class Printer extends EventEmitter {
     });
 
     await page.evaluate(async () => {
-		  let done;
+      let done;
       window.PagedPolyfill.on("page", (page) => {
         const { id, width, height, startToken, endToken, breakAfter, breakBefore, position } = page;
 
@@ -236,6 +230,8 @@ class Printer extends EventEmitter {
       if (window.PagedConfig.after) {
         await window.PagedConfig.after(done);
       }
+    }).catch((error) => {
+      throw error;
     });
 
     await rendered;
@@ -294,7 +290,10 @@ class Printer extends EventEmitter {
   }
 
   async pdf(input, options={}) {
-    let page = await this.render(input);
+    let page = await this.render(input)
+      .catch((e) => {
+        throw e;
+      });
 
     // Get metatags
     const meta = await page.evaluate(() => {
@@ -335,7 +334,7 @@ class Printer extends EventEmitter {
 
     let pdf = await page.pdf(settings)
       .catch((e) => {
-        console.error(e);
+        throw e;
       });
 
     await page.close();
@@ -356,10 +355,7 @@ class Printer extends EventEmitter {
   async html(input, stayopen) {
     let page = await this.render(input);
 
-    let content = await page.content()
-      .catch((e) => {
-        console.error(e);
-      });
+    let content = await page.content();
 
     await page.close();
     return content;
