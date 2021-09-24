@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const program = require("commander");
 const ora = require("ora");
-const Printer = require("../");
+const Printer = require("../index.js");
 const path = require("path");
 const fs = require("fs");
 // const { promisify } = require("util");

@@ -12,7 +12,7 @@ let pagedjsLocation = require.resolve("pagedjs/dist/paged.polyfill.js");
 let paths = pagedjsLocation.split("node_modules");
 let scriptPath = paths[0] + "node_modules" + paths[paths.length-1];
 
-const PostProcesser = require("./postprocesser");
+const PostProcesser = require("./postprocesser.js");
 
 class Printer extends EventEmitter {
   constructor(options = {}) {
