@@ -1,7 +1,7 @@
 const PDFLib = require("pdf-lib");
 const EventEmitter = require("events");
 
-const PDFDocumentWriter = require("./writer");
+const PDFDocumentWriter = require("./writer.js");
 
 class PostProcesser extends EventEmitter {
   constructor(pdf) {

@@ -1,3 +1,3 @@
-const Printer = require('./src/printer');
+const Printer = require("./src/printer.js");
 
 module.exports = Printer;
