@@ -3,6 +3,11 @@
 # https://hub.docker.com/r/library/node/tags/
 image: node:latest
 
+stages:
+  - test
+  - deploy
+  - publish
+
 # This folder is cached between builds
 # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
 cache:
