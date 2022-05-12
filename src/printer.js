@@ -1,18 +1,19 @@
-const EventEmitter = require("events");
-const puppeteer = require("puppeteer");
-const fetch = require("node-fetch");
+import EventEmitter from "events";
+import puppeteer from "puppeteer";
 
-const path = require("path");
-const fs = require("fs");
+import fetch from "node-fetch";
 
-let dir = process.cwd();
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
-// Find top most pagedjs
-let pagedjsLocation = require.resolve("pagedjs/dist/paged.polyfill.js");
-let paths = pagedjsLocation.split("node_modules");
-let scriptPath = paths[0] + "node_modules" + paths[paths.length-1];
+import { PDFDocument } from "pdf-lib";
+import { setTrimBoxes, setMetadata } from "./postprocesser.js";
 
-const PostProcesser = require("./postprocesser.js");
+const currentPath = fileURLToPath(import.meta.url);
+const dir = process.cwd();
+
+const scriptPath = path.resolve(path.dirname(currentPath), "../dist/browser.js");
 
 class Printer extends EventEmitter {
   constructor(options = {}) {
@@ -149,8 +150,6 @@ class Printer extends EventEmitter {
       window.PagedConfig.auto = false;
     });
 
-
-
     await page.addScriptTag({
       path: scriptPath
     });
@@ -241,54 +240,6 @@ class Printer extends EventEmitter {
     return page;
   }
 
-  async _parseOutline(page, tags) {
-    return await page.evaluate((tags) => {
-      const tagsToProcess = [];
-      for (const node of document.querySelectorAll(tags.join(","))) {
-        tagsToProcess.push(node);
-      }
-      tagsToProcess.reverse();
-
-      const root = {children: [], depth: -1};
-      let currentOutlineNode = root;
-
-      while (tagsToProcess.length > 0) {
-        const tag = tagsToProcess.pop();
-        const orderDepth = tags.indexOf(tag.tagName.toLowerCase());
-
-        if (orderDepth < currentOutlineNode.depth) {
-          currentOutlineNode = currentOutlineNode.parent;
-          tagsToProcess.push(tag);
-        } else {
-          const newNode = {
-            title: tag.innerText,
-            id: tag.id,
-            children: [],
-            depth: orderDepth,
-          };
-          if (orderDepth == currentOutlineNode.depth) {
-            newNode.parent = currentOutlineNode.parent;
-            currentOutlineNode.parent.children.push(newNode);
-            currentOutlineNode = newNode;
-          } else if (orderDepth > currentOutlineNode.depth) {
-            newNode.parent = currentOutlineNode;
-            currentOutlineNode.children.push(newNode);
-            currentOutlineNode = newNode;
-          }
-        }
-      }
-
-      const stripParentProperty = (node) => {
-        node.parent = undefined;
-        for (const child of node.children) {
-          stripParentProperty(child);
-        }
-      };
-      stripParentProperty(root);
-      return root.children;
-    }, tags);
-  }
-
   async pdf(input, options={}) {
     let page = await this.render(input)
       .catch((e) => {
@@ -315,8 +266,6 @@ class Printer extends EventEmitter {
       return meta;
     });
 
-    const outline = options.outlineTags.length > 0 ? await this._parseOutline(page, options.outlineTags) : null;
-
     let settings = {
       printBackground: true,
       displayHeaderFooter: false,
@@ -341,13 +290,12 @@ class Printer extends EventEmitter {
 
     this.emit("postprocessing");
 
-    let post = new PostProcesser(pdf);
-    post.metadata(meta);
-    post.boxes(this.pages);
-    if (outline) {
-      post.addOutline(outline);
-    }
-    pdf = post.save();
+    let pdfDoc = await PDFDocument.load(pdf);
+
+    setMetadata(pdfDoc, meta);
+    setTrimBoxes(pdfDoc, this.pages);
+
+    pdf = await pdfDoc.save();
 
     return pdf;
   }
@@ -394,4 +342,4 @@ class Printer extends EventEmitter {
 
 }
 
-module.exports = Printer;
+export default Printer;

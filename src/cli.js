@@ -1,19 +1,20 @@
 #!/usr/bin/env node
-const program = require("commander");
-const ora = require("ora");
-const Printer = require("../index.js");
-const path = require("path");
-const fs = require("fs");
-// const { promisify } = require("util");
-// const writeFileAsync = promisify(fs.writeFile);
-const replaceExt = require("replace-ext");
+import { program } from "commander";
+import ora from "ora";
+import path from "path";
+import fs from "fs";
+import replaceExt from "replace-ext";
+
+import Printer from "./printer.js";
+
+// import pkg from "../package.json" assert { type: "json" };
 
 function commaSeparatedList(value) {
   return value.split(',');
 }
 
 program
-  .version(require("../package.json").version)
+  // .version(pkg.version)
   .arguments("[inputPath]")
   .option("-i, --inputs [inputs]", "Inputs")
   .option("-o, --output [output]", "Output")
@@ -23,11 +24,6 @@ program
   .option("-w, --width [size]", "Print to Page Width [width] in MM")
   .option("-h --height [size]", "Print to Page Height [weight] in MM")
   .option("--forceTransparentBackground", "Print with transparent background")
-  // .option("-m, --page-margin [margin]", "Print with margin [margin]")
-  // .option("-n, --hyphenate [lang]", "Hyphenate with language [language], defaults to "en-us"")
-  // .option("-hi, --hypher_ignore [str]", "Ignore passed element selectors, such as ".class_to_ignore, h1"")
-  // .option("-ho, --hypher_only [str]", "Only hyphenate passed elements selector, such as ".hyphenate, aside"")
-  // .option("-e, --encoding [type]", "Set the encoding of the input html, defaults to "utf-8"")
   .option("-t, --timeout [ms]", "Set a max timeout of [ms]")
   .option("-x, --html", "output html file")
   .option("-b, --blockLocal", "Disallow access to filesystem for local files")
@@ -71,26 +67,23 @@ let output;
 
 let headless = typeof options.debug === "undefined";
 
-// var hyphenator;
-// var hyphenateOptions;
-
 if (!input) {
   console.error("You must include an input path");
-  return process.exit(1);
+  process.exit(1);
 }
 
 if (relativePath) {
 
   if ([".html", ".xhtml"].indexOf(path.extname(relativePath)) === -1) {
     console.error("Must pass a html or xhtml file as input");
-    return process.exit(1);
+    process.exit(1);
   }
 
   try {
       fs.accessSync(relativePath, fs.F_OK);
   } catch (e) {
       console.error("Input cannot be found", e);
-      return process.exit(1);
+      process.exit(1);
   }
 }
 

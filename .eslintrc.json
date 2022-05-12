@@ -1,19 +1,28 @@
-module.exports = {
+{
     "env": {
+        "browser": true,
         "commonjs": true,
         "es6": true,
         "node": true,
-        "browser":  true
+        "jest": true,
+        "es2022": true
+    },
+    "globals": {
     },
     "extends": "eslint:recommended",
-    "globals": {
-        "Atomics": "readonly",
-        "SharedArrayBuffer": "readonly"
-    },
     "parserOptions": {
-        "ecmaVersion": 2018
+        "sourceType": "module",
+        "ecmaVersion": 2020
     },
     "rules": {
+        "indent": [
+            "error",
+            "tab",
+            {
+              "VariableDeclarator": { "var": 2, "let": 2, "const": 3 },
+              "SwitchCase" : 1
+            }
+        ],
         "linebreak-style": [
             "error",
             "unix"
@@ -26,8 +35,7 @@ module.exports = {
             "error",
             "always"
         ],
-        "no-unused-vars" : ["warn"],
-        "no-console" : ["error", { allow: ["log", "warn", "error"] }],
+        "no-console" : ["error", { "allow": ["warn", "error"] }],
         "no-unused-vars": [
           "error",
           { "vars": "all", "args": "none" }
@@ -35,4 +43,4 @@ module.exports = {
         "no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
         "valid-jsdoc": ["warn"]
     }
-};
+}

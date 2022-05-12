@@ -1,35 +1,48 @@
 {
   "name": "pagedjs-cli",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "author": "Fred Chasen",
   "license": "MIT",
-  "homepage": "https://pagedmedia.org",
+  "homepage": "https://pagedjs.org",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.pagedmedia.org/polyfills/pagedjs-cli.git"
+    "url": "https://gitlab.coko.foundation/pagedjs/pagedjs.git"
   },
-  "bin": "./bin/paged",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    "import": "./src/index.js",
+    "require": "./src/index.js",
+    "default": "./src/index.js"
+  },
+  "bin": "./src/cli.js",
   "scripts": {
-    "start": "./bin/paged",
-    "build": "pkg .",
-    "lint": "./node_modules/.bin/eslint src bin/paged"
+    "start": "./src/cli.js",
+    "build": "rollup -c",
+    "lint": "eslint src",
+    "test": "npm run lint"
   },
-  "main": "index.js",
   "dependencies": {
-    "commander": "^8.2.0",
-    "express": "^4.17.1",
+    "commander": "^9.2.0",
+    "express": "^4.18.1",
     "hyphenopoly": "^4.12.0",
-    "katex": "^0.13.18",
+    "katex": "^0.15.3",
     "lodash": "^4.17.21",
     "mathjax": "^3.2.0",
-    "node-fetch": "^2.6.0",
-    "ora": "^5.0.0",
-    "pagedjs": "^0.2.0",
-    "pdf-lib": "0.6.4",
-    "puppeteer": "^10.4.0",
+    "node-fetch": "^3.2.4",
+    "ora": "^6.1.0",
+    "pagedjs": "^0.3.1",
+    "pdf-lib": "1.17.1",
+    "puppeteer": "^14.0.0",
     "replace-ext": "^2.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.32.0"
+    "@rollup/plugin-commonjs": "^22.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "eslint": "^8.15.0",
+    "rollup": "^2.72.1",
+    "rollup-plugin-license": "^2.7.0",
+    "rollup-plugin-serve": "^1.1.0"
   }
 }
