@@ -45,5 +45,9 @@
     "rollup": "^2.72.1",
     "rollup-plugin-license": "^2.7.0",
     "rollup-plugin-serve": "^1.1.0"
-  }
+  },
+  "files": [
+    "dist",
+    "src"
+  ]
 }
