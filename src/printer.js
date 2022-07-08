@@ -28,7 +28,7 @@ class Printer extends EventEmitter {
 		this.browserWSEndpoint = options.browserEndpoint;
 		this.browserArgs = options.browserArgs;
 		this.overrideDefaultBackgroundColor = options.overrideDefaultBackgroundColor;
-		this.timeout = options.timeout;
+		this.timeout = options.timeout || 0;
 		this.closeAfter = typeof options.closeAfter !== "undefined" ? options.closeAfter : true;
 
 		this.pages = [];
@@ -71,9 +71,7 @@ class Printer extends EventEmitter {
 
 		try {
 			const page = await this.browser.newPage();
-			if (this.timeout) {
-				page.setDefaultTimeout(this.timeout);
-			}
+			page.setDefaultTimeout(this.timeout);
 
 			if (this.overrideDefaultBackgroundColor) {
 				page._client.send("Emulation.setDefaultBackgroundColorOverride", { color: this.overrideDefaultBackgroundColor });
@@ -131,7 +129,7 @@ class Printer extends EventEmitter {
 			}
 
 			if (html) {
-				await page.setContent(html, { waitUntil: "networkidle0" });
+				await page.setContent(html);
 
 				if (url) {
 					await page.evaluate((url) => {
@@ -145,7 +143,7 @@ class Printer extends EventEmitter {
 				}
 
 			} else {
-				await page.goto(url, { waitUntil: "networkidle0" });
+				await page.goto(url);
 			}
 
 			this.content = await page.content();
@@ -233,6 +231,10 @@ class Printer extends EventEmitter {
 				throw error;
 			});
 
+			await page.waitForNetworkIdle({
+				timeout: this.timeout
+			});
+
 			await rendered;
 
 			await page.waitForSelector(".pagedjs_pages");
@@ -274,6 +276,7 @@ class Printer extends EventEmitter {
 			const outline =  await parseOutline(page, options.outlineTags);
 
 			let settings = {
+				timeout: this.timeout,
 				printBackground: true,
 				displayHeaderFooter: false,
 				preferCSSPageSize: options.width ? false : true,
