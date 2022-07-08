@@ -29,6 +29,7 @@ class Printer extends EventEmitter {
 		this.browserArgs = options.browserArgs;
 		this.overrideDefaultBackgroundColor = options.overrideDefaultBackgroundColor;
 		this.timeout = options.timeout;
+		this.closeAfter = typeof options.closeAfter !== "undefined" ? options.closeAfter : true;
 
 		this.pages = [];
 	}
@@ -68,174 +69,179 @@ class Printer extends EventEmitter {
 			await this.setup();
 		}
 
-		const page = await this.browser.newPage();
-		if (this.timeout) {
-			page.setDefaultTimeout(this.timeout);
-		}
-
-		if (this.overrideDefaultBackgroundColor) {
-			page._client.send("Emulation.setDefaultBackgroundColorOverride", { color: this.overrideDefaultBackgroundColor });
-		}
-
-		let url, relativePath, html;
-		if (typeof input === "string") {
-			try {
-				new URL(input);
-				url = input;
-			} catch (error) {
-				relativePath = path.resolve(dir, input);
-
-				if (this.browserWSEndpoint) {
-					html = fs.readFileSync(relativePath, "utf-8");
-				} else {
-					url = "file://" + relativePath;
-				}
+		try {
+			const page = await this.browser.newPage();
+			if (this.timeout) {
+				page.setDefaultTimeout(this.timeout);
 			}
-		} else {
-			url = input.url;
-			html = input.html;
-		}
 
-		if (this.needsAllowedRules()) {
-			await page.setRequestInterception(true);
+			if (this.overrideDefaultBackgroundColor) {
+				page._client.send("Emulation.setDefaultBackgroundColorOverride", { color: this.overrideDefaultBackgroundColor });
+			}
 
-			page.on("request", (request) => {
-				let uri = new URL(request.url());
-				let { host, protocol, pathname } = uri;
-				let local = protocol === "file:";
+			let url, relativePath, html;
+			if (typeof input === "string") {
+				try {
+					new URL(input);
+					url = input;
+				} catch (error) {
+					relativePath = path.resolve(dir, input);
 
-				if (local && this.withinAllowedPath(pathname) === false) {
-					request.abort();
-					return;
-				}
-
-				if (local && !this.allowLocal) {
-					request.abort();
-					return;
-				}
-
-				if (host && this.isAllowedDomain(host) === false) {
-					request.abort();
-					return;
-				}
-
-				if (host && !this.allowRemote) {
-					request.abort();
-					return;
-				}
-
-				request.continue();
-			});	
-		}
-
-		if (html) {
-			await page.setContent(html, { waitUntil: "networkidle0" });
-
-			if (url) {
-				await page.evaluate((url) => {
-					let base = document.querySelector("base");
-					if (!base) {
-						base = document.createElement("base");
-						document.querySelector("head").appendChild(base);
+					if (this.browserWSEndpoint) {
+						html = fs.readFileSync(relativePath, "utf-8");
+					} else {
+						url = "file://" + relativePath;
 					}
-					base.setAttribute("href", url);
-				}, url);
+				}
+			} else {
+				url = input.url;
+				html = input.html;
 			}
 
-		} else {
-			await page.goto(url, { waitUntil: "networkidle0" });
-		}
+			if (this.needsAllowedRules()) {
+				await page.setRequestInterception(true);
 
-		this.content = await page.content();
+				page.on("request", (request) => {
+					let uri = new URL(request.url());
+					let { host, protocol, pathname } = uri;
+					let local = protocol === "file:";
 
-		await page.evaluate(() => {
-			window.PagedConfig = window.PagedConfig || {};
-			window.PagedConfig.auto = false;
-		});
+					if (local && this.withinAllowedPath(pathname) === false) {
+						request.abort();
+						return;
+					}
 
-		await page.addScriptTag({
-			path: scriptPath
-		});
+					if (local && !this.allowLocal) {
+						request.abort();
+						return;
+					}
 
-		for (const script of this.additionalScripts) {
+					if (host && this.isAllowedDomain(host) === false) {
+						request.abort();
+						return;
+					}
+
+					if (host && !this.allowRemote) {
+						request.abort();
+						return;
+					}
+
+					request.continue();
+				});	
+			}
+
+			if (html) {
+				await page.setContent(html, { waitUntil: "networkidle0" });
+
+				if (url) {
+					await page.evaluate((url) => {
+						let base = document.querySelector("base");
+						if (!base) {
+							base = document.createElement("base");
+							document.querySelector("head").appendChild(base);
+						}
+						base.setAttribute("href", url);
+					}, url);
+				}
+
+			} else {
+				await page.goto(url, { waitUntil: "networkidle0" });
+			}
+
+			this.content = await page.content();
+
+			await page.evaluate(() => {
+				window.PagedConfig = window.PagedConfig || {};
+				window.PagedConfig.auto = false;
+			});
+
 			await page.addScriptTag({
-				path: script
+				path: scriptPath
 			});
-		}
 
-		await page.exposeFunction("onSize", (size) => {
-			this.emit("size", size);
-		});
+			for (const script of this.additionalScripts) {
+				await page.addScriptTag({
+					path: script
+				});
+			}
 
-		await page.exposeFunction("onPage", (page) => {
+			await page.exposeFunction("onSize", (size) => {
+				this.emit("size", size);
+			});
 
-			this.pages.push(page);
+			await page.exposeFunction("onPage", (page) => {
 
-			this.emit("page", page);
-		});
+				this.pages.push(page);
 
-		await page.exposeFunction("onRendered", (msg, width, height, orientation) => {
-			this.emit("rendered", msg, width, height, orientation);
-			resolver({msg, width, height, orientation});
-		});
+				this.emit("page", page);
+			});
 
-		await page.evaluate(async () => {
-			let done;
-			window.PagedPolyfill.on("page", (page) => {
-				const { id, width, height, startToken, endToken, breakAfter, breakBefore, position } = page;
+			await page.exposeFunction("onRendered", (msg, width, height, orientation) => {
+				this.emit("rendered", msg, width, height, orientation);
+				resolver({msg, width, height, orientation});
+			});
 
-				const mediabox = page.element.getBoundingClientRect();
-				const cropbox = page.pagebox.getBoundingClientRect();
+			await page.evaluate(async () => {
+				let done;
+				window.PagedPolyfill.on("page", (page) => {
+					const { id, width, height, startToken, endToken, breakAfter, breakBefore, position } = page;
 
-				function getPointsValue(value) {
-					return (Math.round(CSS.px(value).to("pt").value * 100) / 100);
+					const mediabox = page.element.getBoundingClientRect();
+					const cropbox = page.pagebox.getBoundingClientRect();
+
+					function getPointsValue(value) {
+						return (Math.round(CSS.px(value).to("pt").value * 100) / 100);
+					}
+
+					let boxes = {
+						media: {
+							width: getPointsValue(mediabox.width),
+							height: getPointsValue(mediabox.height),
+							x: 0,
+							y: 0
+						},
+						crop: {
+							width: getPointsValue(cropbox.width),
+							height: getPointsValue(cropbox.height),
+							x: getPointsValue(cropbox.x) - getPointsValue(mediabox.x),
+							y: getPointsValue(cropbox.y) - getPointsValue(mediabox.y)
+						}
+					};
+
+					window.onPage({ id, width, height, startToken, endToken, breakAfter, breakBefore, position, boxes });
+				});
+
+				window.PagedPolyfill.on("size", (size) => {
+					window.onSize(size);
+				});
+
+				window.PagedPolyfill.on("rendered", (flow) => {
+					let msg = "Rendering " + flow.total + " pages took " + flow.performance + " milliseconds.";
+					window.onRendered(msg, flow.width, flow.height, flow.orientation);
+				});
+
+				if (window.PagedConfig.before) {
+					await window.PagedConfig.before();
 				}
 
-				let boxes = {
-					media: {
-						width: getPointsValue(mediabox.width),
-						height: getPointsValue(mediabox.height),
-						x: 0,
-						y: 0
-					},
-					crop: {
-						width: getPointsValue(cropbox.width),
-						height: getPointsValue(cropbox.height),
-						x: getPointsValue(cropbox.x) - getPointsValue(mediabox.x),
-						y: getPointsValue(cropbox.y) - getPointsValue(mediabox.y)
-					}
-				};
+				done = await window.PagedPolyfill.preview();
 
-				window.onPage({ id, width, height, startToken, endToken, breakAfter, breakBefore, position, boxes });
+				if (window.PagedConfig.after) {
+					await window.PagedConfig.after(done);
+				}
+			}).catch((error) => {
+				throw error;
 			});
 
-			window.PagedPolyfill.on("size", (size) => {
-				window.onSize(size);
-			});
+			await rendered;
 
-			window.PagedPolyfill.on("rendered", (flow) => {
-				let msg = "Rendering " + flow.total + " pages took " + flow.performance + " milliseconds.";
-				window.onRendered(msg, flow.width, flow.height, flow.orientation);
-			});
+			await page.waitForSelector(".pagedjs_pages");
 
-			if (window.PagedConfig.before) {
-				await window.PagedConfig.before();
-			}
-
-			done = await window.PagedPolyfill.preview();
-
-			if (window.PagedConfig.after) {
-				await window.PagedConfig.after(done);
-			}
-		}).catch((error) => {
+			return page;
+		} catch (error) {
+			this.closeAfter && this.close();
 			throw error;
-		});
-
-		await rendered;
-
-		await page.waitForSelector(".pagedjs_pages");
-
-		return page;
+		}
 	}
 
 	async pdf(input, options={}) {
@@ -244,61 +250,66 @@ class Printer extends EventEmitter {
 				throw e;
 			});
 
-		// Get metatags
-		const meta = await page.evaluate(() => {
-			let meta = {};
-			let title = document.querySelector("title");
-			if (title) {
-				meta.title = title.textContent.trim();
-			}
-			let lang = document.querySelector("html").getAttribute("lang");
-			if (lang) {
-				meta.lang = lang;
-			}
-			let metaTags = document.querySelectorAll("meta");
-			[...metaTags].forEach((tag) => {
-				if (tag.name) {
-					meta[tag.name] = tag.content;
+		try {
+			// Get metatags
+			const meta = await page.evaluate(() => {
+				let meta = {};
+				let title = document.querySelector("title");
+				if (title) {
+					meta.title = title.textContent.trim();
 				}
-			});
-			return meta;
-		});
-
-		const outline =  await parseOutline(page, options.outlineTags);
-
-		let settings = {
-			printBackground: true,
-			displayHeaderFooter: false,
-			preferCSSPageSize: options.width ? false : true,
-			width: options.width,
-			height: options.height,
-			orientation: options.orientation,
-			margin: {
-				top: 0,
-				right: 0,
-				bottom: 0,
-				left: 0,
-			}
-		};
-
-		let pdf = await page.pdf(settings)
-			.catch((e) => {
-				throw e;
+				let lang = document.querySelector("html").getAttribute("lang");
+				if (lang) {
+					meta.lang = lang;
+				}
+				let metaTags = document.querySelectorAll("meta");
+				[...metaTags].forEach((tag) => {
+					if (tag.name) {
+						meta[tag.name] = tag.content;
+					}
+				});
+				return meta;
 			});
 
-		await page.close();
+			const outline =  await parseOutline(page, options.outlineTags);
 
-		this.emit("postprocessing");
+			let settings = {
+				printBackground: true,
+				displayHeaderFooter: false,
+				preferCSSPageSize: options.width ? false : true,
+				width: options.width,
+				height: options.height,
+				orientation: options.orientation,
+				margin: {
+					top: 0,
+					right: 0,
+					bottom: 0,
+					left: 0,
+				}
+			};
 
-		let pdfDoc = await PDFDocument.load(pdf);
+			let pdf = await page.pdf(settings)
+				.catch((e) => {
+					throw e;
+				});
 
-		setMetadata(pdfDoc, meta);
-		setTrimBoxes(pdfDoc, this.pages);
-		setOutline(pdfDoc, outline);
+			page.close();
 
-		pdf = await pdfDoc.save();
+			this.emit("postprocessing");
 
-		return pdf;
+			let pdfDoc = await PDFDocument.load(pdf);
+
+			setMetadata(pdfDoc, meta);
+			setTrimBoxes(pdfDoc, this.pages);
+			setOutline(pdfDoc, outline);
+
+			pdf = await pdfDoc.save();
+
+			return pdf;
+		} catch (error) {
+			this.closeAfter && this.close();
+			throw error;
+		}
 	}
 
 	async html(input, stayopen) {
@@ -306,17 +317,20 @@ class Printer extends EventEmitter {
 
 		let content = await page.content();
 
-		await page.close();
+		page.close();
+		this.closeAfter && this.close();
+
 		return content;
 	}
 
 	async preview(input) {
 		let page = await this.render(input);
+		this.closeAfter && this.close();
 		return page;
 	}
 
 	async close() {
-		return this.browser.close();
+		return this.browser && this.browser.close();
 	}
 
 	needsAllowedRules() {
