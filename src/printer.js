@@ -30,6 +30,7 @@ class Printer extends EventEmitter {
 		this.overrideDefaultBackgroundColor = options.overrideDefaultBackgroundColor;
 		this.timeout = options.timeout || 0;
 		this.closeAfter = typeof options.closeAfter !== "undefined" ? options.closeAfter : true;
+		this.emulateMedia = options.emulateMedia || "print";
 
 		this.pages = [];
 	}
@@ -72,6 +73,8 @@ class Printer extends EventEmitter {
 		try {
 			const page = await this.browser.newPage();
 			page.setDefaultTimeout(this.timeout);
+
+			await page.emulateMedia(this.emulateMedia);
 
 			if (this.overrideDefaultBackgroundColor) {
 				page._client.send("Emulation.setDefaultBackgroundColorOverride", { color: this.overrideDefaultBackgroundColor });
