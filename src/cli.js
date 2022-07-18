@@ -41,6 +41,8 @@ program
 	collect, [])
 	.option("--browserEndpoint <browserEndpoint>", "Use a remote Chrome server with browserWSEndpoint")
 	.option("--browserArgs <browserArgs>", "Launch Chrome with comma separated args", commaSeparatedList)
+	.option("--media [media]", "Emulate \"print\" or \"screen\" media, defaults to print.")
+
 	.parse(process.argv);
 
 function collect(value, previous) {
@@ -115,7 +117,8 @@ if (typeof input === "string") {
 		additionalScripts: options.additionalScript,
 		browserEndpoint: options.browserEndpoint,
 		timeout: options.timeout,
-		browserArgs: options.browserArgs
+		browserArgs: options.browserArgs,
+		emulateMedia: options.media
 	};
 
 	if (options.forceTransparentBackground) {
