@@ -31,6 +31,7 @@ class Printer extends EventEmitter {
 		this.timeout = options.timeout || 0;
 		this.closeAfter = typeof options.closeAfter !== "undefined" ? options.closeAfter : true;
 		this.emulateMedia = options.emulateMedia || "print";
+		this.styles = options.styles;
 
 		this.pages = [];
 	}
@@ -155,6 +156,12 @@ class Printer extends EventEmitter {
 				window.PagedConfig = window.PagedConfig || {};
 				window.PagedConfig.auto = false;
 			});
+
+			for (const style of this.styles) {
+				await page.addStyleTag({
+					path: style
+				});
+			}
 
 			await page.addScriptTag({
 				path: scriptPath

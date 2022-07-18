@@ -42,6 +42,7 @@ program
 	.option("--browserEndpoint <browserEndpoint>", "Use a remote Chrome server with browserWSEndpoint")
 	.option("--browserArgs <browserArgs>", "Launch Chrome with comma separated args", commaSeparatedList)
 	.option("--media [media]", "Emulate \"print\" or \"screen\" media, defaults to print.")
+	.option("--style <script>", "Path to CSS stylesheets to be added before rendering", collect, [])
 
 	.parse(process.argv);
 
@@ -115,6 +116,7 @@ if (typeof input === "string") {
 		allowedPaths: options.allowedPaths,
 		allowedDomains: options.allowedDomains,
 		additionalScripts: options.additionalScript,
+		styles: options.style,
 		browserEndpoint: options.browserEndpoint,
 		timeout: options.timeout,
 		browserArgs: options.browserArgs,
