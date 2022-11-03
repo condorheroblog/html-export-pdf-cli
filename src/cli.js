@@ -68,8 +68,6 @@ try {
 
 let output;
 
-let headless = typeof options.debug === "undefined";
-
 if (!input) {
 	console.error("You must include an input path");
 	process.exit(1);
@@ -110,7 +108,8 @@ if (typeof input === "string") {
 
 (async () => {
 	const printerOptions = {
-		headless: headless,
+		debug: options.debug,
+		headless: options.headless,
 		allowLocal: allowLocal,
 		allowRemote: !options.blockRemote,
 		allowedPaths: options.allowedPaths,
@@ -149,26 +148,24 @@ if (typeof input === "string") {
 		spinner.start("Processing");
 	});
 
+	options.outlineTags = !options.outlineTags ? ["h1","h2","h3"] : options.outlineTags.split(",");
+
 	let file;
-	if (headless) {
-		let options = {};
-		if (options.html) {
-			file = await printer.html(input, options)
-				.catch((e) => {
-					console.error(e);
-					process.exit(1);
-				});
-			output = replaceExt(output, ".html");
-		} else {
-			options.outlineTags = !options.outlineTags ? ["h1","h2","h3"] : options.outlineTags.split(",");
-			file = await printer.pdf(input, options)
-				.catch((e) => {
-					console.error(e);
-					process.exit(1);
-				});
-		}
+	if (options.html) {
+		file = await printer.html(input, options)
+			.catch((e) => {
+				console.error(e);
+				process.exit(1);
+			});
+		output = replaceExt(output, ".html");
+	} else if (options.debug === true) {
+		await printer.preview(input);
 	} else {
-		printer.preview(input);
+		file = await printer.pdf(input, options)
+			.catch((e) => {
+				console.error(e);
+				process.exit(1);
+			});
 	}
 
 	spinner.succeed("Processed");

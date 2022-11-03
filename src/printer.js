@@ -18,6 +18,7 @@ class Printer extends EventEmitter {
 	constructor(options = {}) {
 		super();
 
+		this.debug = typeof options.debug !== "undefined" ? options.debug : false;
 		this.headless = options.headless !== false;
 		this.allowLocal = options.allowLocal;
 		this.allowRemote = options.allowRemote;
@@ -34,6 +35,11 @@ class Printer extends EventEmitter {
 		this.styles = options.styles;
 
 		this.pages = [];
+
+		if (this.debug) {
+			this.headless = false;
+			this.closeAfter = false;
+		}
 	}
 
 	async setup() {
@@ -306,7 +312,7 @@ class Printer extends EventEmitter {
 					throw e;
 				});
 
-			page.close();
+			this.closeAfter && page.close();
 
 			this.emit("postprocessing");
 
@@ -330,8 +336,10 @@ class Printer extends EventEmitter {
 
 		let content = await page.content();
 
-		page.close();
-		this.closeAfter && this.close();
+		if (this.closeAfter) {
+			page.close();
+			this.close();
+		}
 
 		return content;
 	}

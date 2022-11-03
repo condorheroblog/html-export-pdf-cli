@@ -1,4 +1,6 @@
-import { Previewer } from "pagedjs";
+import * as Paged from "pagedjs";
+
+window.Paged = Paged;
 
 let ready = new Promise(function(resolve, reject){
 	if (document.readyState === "interactive" || document.readyState === "complete") {
@@ -23,7 +25,7 @@ let config = window.PagedConfig || {
 	settings: undefined
 };
 
-let previewer = new Previewer(config.settings);
+let previewer = new Paged.Previewer(config.settings);
 
 ready.then(async function () {
 	let done;
