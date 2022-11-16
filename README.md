@@ -39,7 +39,7 @@ pagedjs-cli ./path/to/index.html -o result.pdf
 --browserEndpoint <browserEndpoint>  Use a remote Chrome server with browserWSEndpoint
 --browserArgs <browserArgs>          Launch Chrome with comma separated args
 --media [media]                      Emulate "print" or "screen" media, defaults to print.
---style <script>                     Path to CSS stylesheets to be added before rendering (default: [])
+--style <style>                     Path to CSS stylesheets to be added before rendering (default: [])
 --help                               display help for command
 ```
 
