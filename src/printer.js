@@ -20,19 +20,19 @@ class Printer extends EventEmitter {
 
 		this.debug = typeof options.debug !== "undefined" ? options.debug : false;
 		this.headless = options.headless !== false;
-		this.allowLocal = options.allowLocal;
-		this.allowRemote = options.allowRemote;
+		this.allowLocal = options.allowLocal || false;
+		this.allowRemote = typeof options.allowRemote !== "undefined" ? options.allowRemote : true;
 		this.additionalScripts = options.additionalScripts || [];
 		this.allowedPaths = options.allowedPaths || [];
 		this.allowedDomains = options.allowedDomains || [];
-		this.ignoreHTTPSErrors = options.ignoreHTTPSErrors;
+		this.ignoreHTTPSErrors = options.ignoreHTTPSErrors || false;
 		this.browserWSEndpoint = options.browserEndpoint;
 		this.browserArgs = options.browserArgs;
-		this.overrideDefaultBackgroundColor = options.overrideDefaultBackgroundColor;
+		this.overrideDefaultBackgroundColor = options.overrideDefaultBackgroundColor || false;
 		this.timeout = options.timeout || 0;
 		this.closeAfter = typeof options.closeAfter !== "undefined" ? options.closeAfter : true;
 		this.emulateMedia = options.emulateMedia || "print";
-		this.styles = options.styles;
+		this.styles = options.styles || [];
 
 		this.pages = [];
 
