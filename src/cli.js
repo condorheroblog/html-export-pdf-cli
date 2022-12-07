@@ -42,7 +42,7 @@ program
 	.option("--browserEndpoint <browserEndpoint>", "Use a remote Chrome server with browserWSEndpoint")
 	.option("--browserArgs <browserArgs>", "Launch Chrome with comma separated args", commaSeparatedList)
 	.option("--media [media]", "Emulate \"print\" or \"screen\" media, defaults to print.")
-	.option("--style <script>", "Path to CSS stylesheets to be added before rendering", collect, [])
+	.option("--style <style>", "Path to CSS stylesheets to be added before rendering", collect, [])
 	.option("--warn", "Enable warning logs")
 	.parse(process.argv);
 
