@@ -43,7 +43,7 @@ program
 	.option("--browserArgs <browserArgs>", "Launch Chrome with comma separated args", commaSeparatedList)
 	.option("--media [media]", "Emulate \"print\" or \"screen\" media, defaults to print.")
 	.option("--style <script>", "Path to CSS stylesheets to be added before rendering", collect, [])
-
+	.option("--warn", "Enable warning logs")
 	.parse(process.argv);
 
 function collect(value, previous) {
@@ -119,7 +119,8 @@ if (typeof input === "string") {
 		browserEndpoint: options.browserEndpoint,
 		timeout: options.timeout,
 		browserArgs: options.browserArgs,
-		emulateMedia: options.media
+		emulateMedia: options.media,
+		enableWarnings: options.warn
 	};
 
 	if (options.forceTransparentBackground) {
