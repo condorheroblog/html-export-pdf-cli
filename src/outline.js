@@ -12,7 +12,7 @@ function sanitize (string) {
 	return htmlEntitiesDecode(string);
 }
 
-async function parseOutline(page, tags) {
+async function parseOutline(page, tags, enableWarnings) {
 	return await page.evaluate((tags) => {
 		const tagsToProcess = [];
 		for (const node of document.querySelectorAll(tags.join(","))) {
@@ -121,14 +121,18 @@ This likely happened because an anchor link contained an umlaut (https://bugs.ch
 	}
 }
 
-async function setOutline (pdfDoc, outline) {
+async function setOutline (pdfDoc, outline, enableWarnings=false) {
 	const context = pdfDoc.context;
 	const outlineRef = context.nextRef();
 
 	if (outline.length === 0) {
 		return pdfDoc;
 	}
-	generateWarningsAboutMissingDestinations(outline, pdfDoc);
+
+	if (enableWarnings) {
+		generateWarningsAboutMissingDestinations(outline, pdfDoc);
+	}
+
 	setRefsForOutlineItems(outline, context, outlineRef);
 	buildPdfObjectsForOutline(outline, context);
 

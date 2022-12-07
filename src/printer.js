@@ -33,6 +33,7 @@ class Printer extends EventEmitter {
 		this.closeAfter = typeof options.closeAfter !== "undefined" ? options.closeAfter : true;
 		this.emulateMedia = options.emulateMedia || "print";
 		this.styles = options.styles || [];
+		this.enableWarnings = options.enableWarnings || false;
 
 		this.pages = [];
 
@@ -320,7 +321,7 @@ class Printer extends EventEmitter {
 
 			setMetadata(pdfDoc, meta);
 			setTrimBoxes(pdfDoc, this.pages);
-			setOutline(pdfDoc, outline);
+			setOutline(pdfDoc, outline, options.enableWarnings);
 
 			pdf = await pdfDoc.save();
 
