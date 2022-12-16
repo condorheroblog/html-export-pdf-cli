@@ -290,7 +290,7 @@ class Printer extends EventEmitter {
 				return meta;
 			});
 
-			const outline =  await parseOutline(page, options.outlineTags);
+			const outline = await parseOutline(page, options.outlineTags);
 
 			let settings = {
 				timeout: this.timeout,
@@ -321,7 +321,7 @@ class Printer extends EventEmitter {
 
 			setMetadata(pdfDoc, meta);
 			setTrimBoxes(pdfDoc, this.pages);
-			setOutline(pdfDoc, outline, options.enableWarnings);
+			setOutline(pdfDoc, outline, this.enableWarnings);
 
 			pdf = await pdfDoc.save();
 

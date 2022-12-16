@@ -23,24 +23,40 @@ async function parseOutline(page, tags, enableWarnings) {
 		const root = {children: [], depth: -1};
 		let currentOutlineNode = root;
 
+		const linkHolder = document.createElement("div");
+		const body = document.querySelector("body");
+		linkHolder.style.display = "none";
+		body.insertBefore(linkHolder, body.firstChild);
+
 		while (tagsToProcess.length > 0) {
 			const tag = tagsToProcess.pop();
 			const orderDepth = tags.indexOf(tag.tagName.toLowerCase());
+			const dest = encodeURIComponent(tag.id).replace(/%/g, "#25");
+
+			// Add to link holder to register a destination
+			const hiddenLink = document.createElement("a");
+			hiddenLink.href = "#"+dest;
+			linkHolder.appendChild(hiddenLink);
 
 			if (orderDepth < currentOutlineNode.depth) {
 				currentOutlineNode = currentOutlineNode.parent;
 				tagsToProcess.push(tag);
 			} else {
 				const newNode = {
-					title: tag.innerText,
+					title: tag.innerText.trim(),
 					// encode section ID until https://bugs.chromium.org/p/chromium/issues/detail?id=985254 is fixed
-					destination: encodeURIComponent(tag.id).replace(/%/g, "#25"),
+					destination: dest,
 					children: [],
 					depth: orderDepth,
 				};
 				if (orderDepth == currentOutlineNode.depth) {
-					newNode.parent = currentOutlineNode.parent;
-					currentOutlineNode.parent.children.push(newNode);
+					if (currentOutlineNode.parent) {
+						newNode.parent = currentOutlineNode.parent;
+						currentOutlineNode.parent.children.push(newNode);
+					} else {
+						newNode.parent = currentOutlineNode;
+						currentOutlineNode.children.push(newNode);
+					}
 					currentOutlineNode = newNode;
 				} else if (orderDepth > currentOutlineNode.depth) {
 					newNode.parent = currentOutlineNode;
@@ -113,8 +129,7 @@ function generateWarningsAboutMissingDestinations (layer, pdfDoc) {
 		const validDestinationTargets = dests.entries().map(([key, _]) => key.value());
 		for (const item of layer) {
 			if (item.destination && !validDestinationTargets.includes("/" + item.destination)) {
-				console.warn(`Unable to find destination ${item.destination} while generating PDF outline! \
-This likely happened because an anchor link contained an umlaut (https://bugs.chromium.org/p/chromium/issues/detail?id=985254).`);
+				console.warn(`Unable to find destination "${item.destination}" while generating PDF outline.`);
 			}
 			generateWarningsAboutMissingDestinations(item.children, pdfDoc);
 		}
