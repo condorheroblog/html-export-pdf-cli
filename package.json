@@ -1,53 +1,92 @@
 {
-  "name": "pagedjs-cli",
-  "version": "0.3.4",
-  "author": "Fred Chasen",
-  "license": "MIT",
-  "homepage": "https://pagedjs.org",
-  "repository": {
-    "type": "git",
-    "url": "https://gitlab.coko.foundation/pagedjs/pagedjs.git"
-  },
-  "type": "module",
-  "main": "./src/index.js",
-  "exports": {
-    "import": "./src/index.js",
-    "require": "./src/index.js",
-    "default": "./src/index.js"
-  },
-  "bin": "./src/cli.js",
-  "scripts": {
-    "start": "./src/cli.js",
-    "build": "rollup -c",
-    "lint": "eslint src",
-    "test": "npm run lint",
-    "prepare": "npm run build"
-  },
-  "dependencies": {
-    "commander": "^10.0.0",
-    "express": "^4.18.2",
-    "html-entities": "^2.3.3",
-    "katex": "^0.16.4",
-    "lodash": "^4.17.21",
-    "mathjax": "^3.2.2",
-    "node-fetch": "^3.3.1",
-    "ora": "^6.1.2",
-    "pagedjs": "^0.4.1",
-    "pdf-lib": "1.17.1",
-    "puppeteer": "^19.7.5",
-    "replace-ext": "^2.0.0"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^24.0.1",
-    "@rollup/plugin-json": "^6.0.0",
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "eslint": "^8.36.0",
-    "rollup": "^3.19.1",
-    "rollup-plugin-license": "^3.0.1",
-    "rollup-plugin-serve": "^2.0.2"
-  },
-  "files": [
-    "dist",
-    "src"
-  ]
+	"name": "html-export-pdf-cli",
+	"type": "module",
+	"version": "0.3.4",
+	"description": "Render Html to PDFs using Pagedjs and Puppeteer.",
+	"author": "CondorHero",
+	"license": "MIT",
+	"homepage": "https://github.com/condorheroblog/html-export-pdf-cli#readme",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:condorheroblog/html-export-pdf-cli.git"
+	},
+	"bugs": {
+		"url": "https://github.com/condorheroblog/html-export-pdf-cli/issues"
+	},
+	"keywords": [
+		"html-export-pdf-cli",
+		"html-export-pdf",
+		"html-to-pdf-cli",
+		"html-to-pdf",
+		"htmltopdf",
+		"html2pdf",
+		"pdf-cli"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"require": "./dist/index.cjs",
+			"import": "./dist/index.mjs"
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "dist/index.mjs",
+	"types": "dist/index.d.ts",
+	"typesVersions": {
+		"*": {
+			"*": [
+				"./dist/*",
+				"./dist/index.d.ts"
+			]
+		}
+	},
+	"bin": {
+		"html-export-pdf-cli": "./src/cli.js"
+	},
+	"files": [
+		"dist",
+		"bin"
+	],
+	"scripts": {
+		"postinstall": "simple-git-hooks",
+		"prepublishOnly": "nr build",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"dev": "esno ./src/index.ts",
+		"coverage": "vitest run --coverage",
+		"test": "vitest",
+		"build": "tsup",
+		"build:watch": "tsup --watch",
+		"typecheck": "tsc --noEmit",
+		"release": "bumpp package.json packages/*/package.json && npm publish"
+	},
+	"dependencies": {
+		"commander": "^10.0.0",
+		"html-entities": "^2.3.3",
+		"ora": "^6.3.0",
+		"pagedjs": "^0.4.1",
+		"pdf-lib": "1.17.1",
+		"puppeteer": "^19.8.5"
+	},
+	"devDependencies": {
+		"@antfu/eslint-config-ts": "^0.38.4",
+		"bumpp": "^9.1.0",
+		"eslint": "^8.38.0",
+		"esno": "^0.16.3",
+		"lint-staged": "^13.2.1",
+		"simple-git-hooks": "^2.8.1",
+		"tsup": "^6.7.0",
+		"typescript": "^5.0.4",
+		"vitest": "^0.30.0"
+	},
+	"simple-git-hooks": {
+		"pre-commit": "npx lint-staged"
+	},
+	"lint-staged": {
+		"*": "eslint --fix"
+	},
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org"
+	}
 }

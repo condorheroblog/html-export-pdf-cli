@@ -1,0 +1,33 @@
+/*
+ * Eslint config file
+ * Documentation: https://eslint.org/docs/user-guide/configuring/
+ * Install the Eslint extension before using this feature.
+ */
+{
+	"extends": "@antfu/eslint-config-ts",
+	"rules": {
+		"no-tabs": "off",
+		"@typescript-eslint/indent": "off",
+		"indent": [
+			"error",
+			"tab",
+			{
+				"SwitchCase": 1
+			}
+		]
+	},
+	"overrides": [
+		{
+			"files": [
+				"*.json",
+				"*.json5"
+			],
+			"rules": {
+				"jsonc/indent": [
+					"error",
+					"tab"
+				]
+			}
+		}
+	]
+}

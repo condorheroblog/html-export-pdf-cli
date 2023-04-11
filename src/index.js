@@ -1,3 +1,3 @@
-import Printer from "./printer.js";
+import Printer from './printer.js'
 
-export default Printer;
+export default Printer

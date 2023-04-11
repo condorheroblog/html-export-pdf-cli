@@ -1,17 +1,17 @@
-# PagedJS PDF Renderer
+# html-export-pdf-cli
 
 Render Html to PDFs using [Pagedjs](https://gitlab.pagedmedia.org/polyfills/pagedjs) and [Puppeteer](https://github.com/GoogleChrome/puppeteer).
 
 ## Installation
 
 ```
-npm install -g pagedjs-cli
+npm install -g html-export-pdf-cli
 ```
 
 ## Generating a PDF
 
 ```
-pagedjs-cli ./path/to/index.html -o result.pdf
+html-export-pdf-cli ./path/to/index.html -o result.pdf
 ```
 
 ## Options
@@ -49,44 +49,4 @@ pagedjs-cli ./path/to/index.html -o result.pdf
                                       (default: [])
 --warn                               Enable warning logs
 --help                               display help for command
-```
-
-## Development
-Link and build the JS
-```
-npm install
-npm link
-npm install -g gulp
-
-gulp watch
-```
-
-To display the output in the browser window before printing,
-instead of outputting the file add the `--debug` flag.
-
-```
-pagedjs-cli ./path/to/index.html --debug
-```
-
-## Testing
-
-Install Mocha with `npm install -g mocha`
-
-Run the tests from the library root with the `mocha` command
-```
-mocha
-```
-
-## Docker
-
-Build the Docker image
-
-```bash
-docker build -t pagedmedia/pagedjs-cli .
-```
-
-Run the Docker image
-
-```bash
-docker run -it --security-opt 'seccomp=seccomp.json' pagedmedia/pagedjs-cli bash
 ```
