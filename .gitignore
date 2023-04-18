@@ -7,12 +7,14 @@
 dist
 node_modules
 pnpm-global
+examples
 demo
 
 ### Node template
 # Logs
 logs
 *.log
+*.pdf
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

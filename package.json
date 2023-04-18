@@ -2,6 +2,7 @@
 	"name": "html-export-pdf-cli",
 	"type": "module",
 	"version": "0.3.4",
+	"packageManager": "pnpm@8.3.0",
 	"description": "Render Html to PDFs using Pagedjs and Puppeteer.",
 	"author": "CondorHero",
 	"license": "MIT",
@@ -26,11 +27,11 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"require": "./dist/index.cjs",
-			"import": "./dist/index.mjs"
+			"import": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.cjs",
-	"module": "dist/index.mjs",
+	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"typesVersions": {
 		"*": {
@@ -41,18 +42,21 @@
 		}
 	},
 	"bin": {
-		"html-export-pdf-cli": "./src/cli.js"
+		"html-export-pdf-cli": "bin/html-export-pdf-cli.mjs"
 	},
 	"files": [
 		"dist",
 		"bin"
 	],
+	"engines": {
+		"node": ">=18.12.0"
+	},
 	"scripts": {
 		"postinstall": "simple-git-hooks",
 		"prepublishOnly": "nr build",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
-		"dev": "esno ./src/index.ts",
+		"dev": "jiti ./src/index.ts",
 		"coverage": "vitest run --coverage",
 		"test": "vitest",
 		"build": "tsup",
@@ -60,24 +64,31 @@
 		"typecheck": "tsc --noEmit",
 		"release": "bumpp package.json packages/*/package.json && npm publish"
 	},
+	"workspaces": [
+		"examples/*"
+	],
 	"dependencies": {
-		"commander": "^10.0.0",
+		"cli-progress": "^3.12.0",
+		"commander": "^10.0.1",
+		"fast-glob": "^3.2.12",
 		"html-entities": "^2.3.3",
-		"ora": "^6.3.0",
 		"pagedjs": "^0.4.1",
 		"pdf-lib": "1.17.1",
-		"puppeteer": "^19.8.5"
+		"puppeteer": "^19.9.1"
 	},
 	"devDependencies": {
 		"@antfu/eslint-config-ts": "^0.38.4",
+		"@types/cli-progress": "^3.11.0",
+		"@types/node": "^18.15.11",
 		"bumpp": "^9.1.0",
+		"colorette": "^2.0.20",
 		"eslint": "^8.38.0",
-		"esno": "^0.16.3",
+		"jiti": "^1.18.2",
 		"lint-staged": "^13.2.1",
 		"simple-git-hooks": "^2.8.1",
 		"tsup": "^6.7.0",
 		"typescript": "^5.0.4",
-		"vitest": "^0.30.0"
+		"vitest": "^0.30.1"
 	},
 	"simple-git-hooks": {
 		"pre-commit": "npx lint-staged"

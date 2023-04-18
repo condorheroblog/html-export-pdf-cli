@@ -2,45 +2,38 @@ import * as Paged from "pagedjs";
 
 window.Paged = Paged;
 
-let ready = new Promise(function(resolve, reject){
+const ready = new Promise((resolve) => {
 	if (document.readyState === "interactive" || document.readyState === "complete") {
 		resolve(document.readyState);
 		return;
 	}
 
-	document.onreadystatechange = function ($) {
-		if (document.readyState === "interactive") {
+	document.onreadystatechange = function () {
+		if (document.readyState === "interactive")
 			resolve(document.readyState);
-		}
 	};
 });
 
-let config = window.PagedConfig || {
+const config = window.PagedConfig || {
 	auto: true,
 	before: undefined,
 	after: undefined,
 	content: undefined,
 	stylesheets: undefined,
 	renderTo: undefined,
-	settings: undefined
+	settings: {},
 };
 
-let previewer = new Paged.Previewer(config.settings);
+export const previewer = new Paged.Previewer(config.settings);
 
-ready.then(async function () {
+ready.then(async () => {
 	let done;
-	if (config.before) {
+	if (config.before)
 		await config.before();
-	}
 
-	if(config.auto !== false) {
+	if (config.auto)
 		done = await previewer.preview(config.content, config.stylesheets, config.renderTo);
-	}
 
-
-	if (config.after) {
+	if (config.after)
 		await config.after(done);
-	}
 });
-
-export default previewer;

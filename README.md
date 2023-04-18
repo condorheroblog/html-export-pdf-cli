@@ -1,6 +1,21 @@
 # html-export-pdf-cli
 
+<br />
+
 Render Html to PDFs using [Pagedjs](https://gitlab.pagedmedia.org/polyfills/pagedjs) and [Puppeteer](https://github.com/GoogleChrome/puppeteer).
+
+<a href="https://www.npmjs.com/package/@condorhero/html-export-pdf-cli" target="__blank"><img src="https://img.shields.io/npm/v/@condorhero/html-export-pdf-cli" alt="NPM version"></a>
+<a href="https://www.npmjs.com/package/@condorhero/html-export-pdf-cli" target="__blank"><img alt="NPM Downloads" src="https://img.shields.io/npm/dm/@condorhero/html-export-pdf-cli"></a>
+<br>
+<a href="https://github.com/condorheroblog/html-export-pdf-cli" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/condorheroblog/html-export-pdf-cli?style=social"></a>
+
+## Features
+
+- 🖥️ Converting HTML to PDF for `.html`, `.htm`, `.xhtml` file formats
+- 📑 **Added PDF outline**
+- ⚙️ Configurations for generating PDF with Puppeteer —— [pdfOptions](https://github.com/puppeteer/puppeteer/blob/main/docs/api/puppeteer.pdfoptions.md)
+- 📂 Multi-file PDF generation
+- ⌨️ Developed in TypeScript
 
 ## Installation
 
@@ -8,17 +23,30 @@ Render Html to PDFs using [Pagedjs](https://gitlab.pagedmedia.org/polyfills/page
 npm install -g html-export-pdf-cli
 ```
 
-## Generating a PDF
+### Generating a PDF
 
 ```
-html-export-pdf-cli ./path/to/index.html -o result.pdf
+html-export-pdf-cli ./index.html -o result.pdf
+```
+
+### Generating two PDFs
+
+```
+html-export-pdf-cli ./index.html ./home.html
+```
+
+### Generating many PDFs
+
+```
+html-export-pdf-cli ./pdf/*.html
 ```
 
 ## Options
 
 ```
 -i, --inputs [inputs]                Inputs
--o, --output [output]                Output
+-o, --output [outFile]               OutFile
+--output [outDir]                    OutDir
 -d, --debug                          Debug
 -l, --landscape                      Landscape printing (default: false)
 -s, --page-size [size]               Print to Page Size [size]

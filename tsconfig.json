@@ -11,7 +11,8 @@
 		"jsx": "preserve",
 		"lib": [
 			"ESNext",
-			"DOM"
+			"DOM",
+			"DOM.Iterable"
 		]
 	}
 }
