@@ -1,7 +1,7 @@
 import EventEmitter from "node:events";
 import path from "node:path";
 
-import type { Browser } from "puppeteer";
+import type { Browser, Page as BrowserPage, PDFMargin, PDFOptions } from "puppeteer";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
 
@@ -12,14 +12,6 @@ import { getOutline, setOutline } from "./outline";
 import { setMetadata, setTrimBoxes } from "./postprocesser";
 
 const scriptPath = path.resolve(getDirname(), "./paged.global.js");
-
-interface Flow {
-	performance: number
-	width: number
-	height: number
-	total: number
-	orientation: boolean
-}
 
 interface PrinterOptions {
 	debug?: boolean
@@ -35,7 +27,7 @@ interface PrinterOptions {
 	timeout?: number
 	closeAfter?: boolean
 	emulateMedia?: string
-	styles?: string[]
+	additionalStyles?: string[]
 	enableWarnings?: boolean
 }
 interface PrinterOptions {
@@ -52,7 +44,7 @@ interface PrinterOptions {
 	timeout?: number
 	closeAfter?: boolean
 	emulateMedia?: string
-	styles?: string[]
+	additionalStyles?: string[]
 	enableWarnings?: boolean
 }
 
@@ -66,13 +58,14 @@ export class Printer extends EventEmitter {
 	private allowedDomains: string[];
 	private ignoreHTTPSErrors: boolean;
 	private browserWSEndpoint?: string;
-	private browserArgs: string[] | undefined;
+	private browserArgs: string[];
 	private timeout: number;
 	private closeAfter: boolean;
 	private emulateMedia: string;
-	private styles: string[];
+	private additionalStyles: string[];
 	private enableWarnings: boolean;
 	private pages: Page[];
+	private page?: BrowserPage;
 	private browser?: Browser;
 	public content?: string;
 
@@ -88,11 +81,11 @@ export class Printer extends EventEmitter {
 		this.allowedDomains = options.allowedDomains ?? [];
 		this.ignoreHTTPSErrors = options.ignoreHTTPSErrors ?? false;
 		this.browserWSEndpoint = options.browserEndpoint;
-		this.browserArgs = options.browserArgs;
+		this.browserArgs = options.browserArgs ?? [];
 		this.timeout = options.timeout ?? 0;
 		this.closeAfter = options.closeAfter ?? true;
 		this.emulateMedia = options.emulateMedia ?? "print";
-		this.styles = options.styles ?? [];
+		this.additionalStyles = options.additionalStyles ?? [];
 		this.enableWarnings = options.enableWarnings ?? false;
 
 		this.pages = [];
@@ -129,17 +122,47 @@ export class Printer extends EventEmitter {
 		return this.browser;
 	}
 
-	async render(input: string) {
-		let resolver: (value: unknown) => void;
-		const rendered = new Promise((resolve) => {
-			resolver = resolve;
+	async renderPagedjs(options: HtmlExportPdfOptions) {
+		const page = this.page!;
+		if (options.pageSize)
+			await page.addStyleTag({ content: `@page { size: ${options.pageSize}; }` });
+
+		else if (options.width || options.height)
+			await page.addStyleTag({ content: `@page { size: ${options.width};  ${options.height}; }` });
+
+		await page.evaluate(() => {
+			window.PagedConfig = window.PagedConfig ?? {};
+			window.PagedConfig.auto = false;
 		});
 
+		await page.addScriptTag({
+			path: scriptPath,
+		});
+
+		await page.evaluate(async () => {
+			// tsup.config.ts format IIFE
+			const { previewer } = window.PagedPolyfill;
+
+			if (window.PagedConfig.before)
+				await window.PagedConfig.before();
+
+			const done = await previewer.preview();
+
+			if (window.PagedConfig.after)
+				await window.PagedConfig.after(done);
+		}).catch((error) => {
+			throw error;
+		});
+
+		await page.waitForSelector(".pagedjs_pages");
+	}
+
+	async render(input: string) {
 		if (!this.browser)
 			await this.setup();
 
 		try {
-			const page = await this.browser!.newPage();
+			const page = this.page = await this.browser!.newPage();
 			page.setDefaultTimeout(this.timeout);
 			await page.emulateMediaType(this.emulateMedia);
 
@@ -178,20 +201,11 @@ export class Printer extends EventEmitter {
 			await page.goto(input, { waitUntil: "networkidle2" });
 			this.content = await page.content();
 
-			await page.evaluate(() => {
-				window.PagedConfig = window.PagedConfig ?? {};
-				window.PagedConfig.auto = false;
-			});
-
-			for (const style of this.styles) {
+			for (const style of this.additionalStyles) {
 				await page.addStyleTag({
 					path: style,
 				});
 			}
-
-			await page.addScriptTag({
-				path: scriptPath,
-			});
 
 			for (const script of this.additionalScripts) {
 				await page.addScriptTag({
@@ -199,80 +213,9 @@ export class Printer extends EventEmitter {
 				});
 			}
 
-			await page.exposeFunction("onSize", (size: number) => {
-				this.emit("size", size);
-			});
-
-			await page.exposeFunction("onPage", (page: Page) => {
-				this.pages.push(page);
-
-				this.emit("page", page);
-			});
-
-			await page.exposeFunction("onRendered", (msg: string, width: number, height: number, orientation: boolean) => {
-				this.emit("rendered", msg, width, height, orientation);
-				resolver({ msg, width, height, orientation });
-			});
-
-			await page.evaluate(async () => {
-				// tsup.config.ts format IIFE
-				const { previewer } = window.PagedPolyfill;
-				previewer.on("page", (page) => {
-					const { id, width, height, startToken, endToken, breakAfter, breakBefore, position } = page;
-
-					const mediabox = page.element.getBoundingClientRect();
-					const cropbox = page.pagebox.getBoundingClientRect();
-
-					function getPointsValue(value: number) {
-						// https://github.com/microsoft/TypeScript/issues/38554
-						return (Math.round((CSS as any).px(value).to("pt").value * 100) / 100);
-					}
-
-					const boxes = {
-						media: {
-							width: getPointsValue(mediabox.width),
-							height: getPointsValue(mediabox.height),
-							x: 0,
-							y: 0,
-						},
-						crop: {
-							width: getPointsValue(cropbox.width),
-							height: getPointsValue(cropbox.height),
-							x: getPointsValue(cropbox.x) - getPointsValue(mediabox.x),
-							y: getPointsValue(cropbox.y) - getPointsValue(mediabox.y),
-						},
-					};
-
-					window.onPage({ id, width, height, startToken, endToken, breakAfter, breakBefore, position, boxes });
-				});
-
-				previewer.on("size", (size: number) => {
-					window.onSize(size);
-				});
-
-				previewer.on("rendered", (flow: Flow) => {
-					const msg = `Rendering ${flow.total} pages took ${flow.performance} milliseconds.`;
-					window.onRendered(msg, flow.width, flow.height, flow.orientation);
-				});
-
-				if (window.PagedConfig.before)
-					await window.PagedConfig.before();
-
-				const done = await previewer.preview();
-
-				if (window.PagedConfig.after)
-					await window.PagedConfig.after(done);
-			}).catch((error) => {
-				throw error;
-			});
-
 			await page.waitForNetworkIdle({
 				timeout: this.timeout,
 			});
-
-			await rendered;
-
-			await page.waitForSelector(".pagedjs_pages");
 
 			return page;
 		}
@@ -308,26 +251,44 @@ export class Printer extends EventEmitter {
 				return meta;
 			});
 
-			const outline = await getOutline(page, options.outlineTags);
-
-			const pdf = await page.pdf({
+			const pdfExportOptions: PDFOptions = {
+				scale: !options.scale ? 1 : +options.scale,
 				timeout: this.timeout,
-				printBackground: true,
 				displayHeaderFooter: false,
-				preferCSSPageSize: !options.width,
+				headerTemplate: options.headerTemplate,
+				footerTemplate: options.footerTemplate,
+				preferCSSPageSize: options.preferCSSPageSize,
+				printBackground: options.printBackground,
+				omitBackground: options.omitBackground,
 				width: options.width,
 				height: options.height,
-				landscape: options.orientation,
-				margin: {
-					top: 0,
-					right: 0,
-					bottom: 0,
-					left: 0,
-				},
-			})
+				landscape: options.landscape,
+				format: options.pageSize,
+			};
+
+			if (options.margin) {
+				pdfExportOptions.margin = options.margin.split(",").reduce<PDFMargin>((obj, item) => {
+					const [key, value] = item.split("=");
+					if (key === "top" || key === "bottom" || key === "left" || key === "right")
+						obj[key] = value;
+
+					return obj;
+				}, {});
+			}
+
+			if (options.pageRanges)
+				pdfExportOptions.pageRanges = options.pageRanges;
+
+			if (options.headerTemplate || options.footerTemplate)
+				pdfExportOptions.displayHeaderFooter = true;
+
+			const pdf = await page.pdf(pdfExportOptions)
 				.catch((e) => {
 					throw e;
 				});
+
+			await this.renderPagedjs(options);
+			const outline = await getOutline(page, options.outlineTags ?? []);
 
 			this.closeAfter && page.close();
 

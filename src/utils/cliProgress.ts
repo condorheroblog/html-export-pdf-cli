@@ -7,7 +7,7 @@ export function createProgress(indeterminate = false) {
 	}
 	let current = 0;
 	let spinner = 0;
-	let text = indeterminate ? "starting" : "";
+	let text = "Generating";
 	let timer: NodeJS.Timer;
 
 	const progress = new SingleBar({

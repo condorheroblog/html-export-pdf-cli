@@ -2,6 +2,7 @@ import path from "node:path";
 import { accessSync, constants } from "node:fs";
 
 import { dim, green, red } from "colorette";
+import type { PaperFormat } from "puppeteer";
 import fg from "fast-glob";
 
 import { createProgress, isValidUrl, replaceExt, writeFileSafe } from "../../utils";
@@ -9,31 +10,35 @@ import { Printer } from "../../";
 
 export interface HtmlExportPdfOptions {
 	inputs: string[]
-	landscape: boolean
-	blockLocal: boolean
-	html: boolean
-	allowedPath: []
-	allowedDomain: []
-	outlineTags: string[]
-	additionalScript: []
-	styles: string[]
 	outFile?: string
 	outDir?: string
-	debug: boolean
-	headless: boolean
+	debug?: boolean
+	scale?: string
+	headerTemplate?: string
+	footerTemplate?: string
+	preferCSSPageSize?: boolean
+	printBackground?: boolean
+	omitBackground?: boolean
+	pageRanges?: string
+	margin?: string
+	landscape?: boolean
+	pageSize?: PaperFormat
+	width?: number | string
+	height?: number | string
+	timeout?: number
+	html: boolean
+	blockLocal: boolean
 	blockRemote: boolean
-	allowRemote: boolean
-	allowedPaths: string[]
-	allowedDomains: string[]
+	allowedPaths?: string[]
+	allowedDomains?: string[]
+	ignoreHTTPSErrors?: boolean
+	outlineTags?: string[]
 	additionalScripts: string[]
-	browserEndpoint: string
-	timeout: number
-	browserArgs: string[]
-	media: string
+	additionalStyles?: string[]
+	browserEndpoint?: string
+	browserArgs?: string[]
+	media?: string
 	warn: boolean
-	width?: number
-	height?: number
-	orientation?: boolean
 }
 
 export async function htmlExportPdf(args: undefined | string[], options: HtmlExportPdfOptions) {
@@ -46,31 +51,29 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 
 	const dir = process.cwd();
 
-	const globPaths = fg.sync(inputArr, {
-		ignore: ["node_modules"],
-		onlyFiles: true,
-		cwd: dir,
-		absolute: true,
-	});
-
-	globPaths.forEach((absoluteInputPath: string, inputIndex: number) => {
-		if (![".htm", ".html", ".xhtml"].includes(path.extname(absoluteInputPath))) {
-			red(`${absoluteInputPath} is must a html or xhtml file`);
-			process.exit(1);
-		}
-
-		if (!isValidUrl(absoluteInputPath)) {
-			try {
-				accessSync(absoluteInputPath, constants.F_OK);
-			}
-			catch (e) {
-				console.error(`${absoluteInputPath} Input cannot be found`, e);
+	const globPaths = inputArr.reduce<string[]>((acc, inputPath) => {
+		if (!isValidUrl(inputPath)) {
+			if (![".htm", ".html", ".xhtml"].includes(path.extname(inputPath))) {
+				red(`${inputPath} is must a html or xhtml file`);
 				process.exit(1);
 			}
-
-			globPaths[inputIndex] = `file://${absoluteInputPath}`;
+			try {
+				accessSync(inputPath, constants.F_OK);
+			}
+			catch (e) {
+				console.error(`${inputPath} Input cannot be found`, e);
+				process.exit(1);
+			}
+			const absolutePathArr = fg.sync([inputPath], {
+				ignore: ["node_modules"],
+				onlyFiles: true,
+				cwd: dir,
+				absolute: true,
+			});
+			return [...acc, ...absolutePathArr.map(item => `file://${item}`)];
 		}
-	});
+		return [...acc, inputPath];
+	}, []);
 
 	const isSingleFile = globPaths.length === 1;
 	const progress = createProgress(isSingleFile);
@@ -78,13 +81,14 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 
 	const printerOptions = {
 		debug: options.debug,
-		headless: options.headless,
+		headless: true,
 		allowLocal: !options.blockLocal,
 		allowRemote: !options.blockRemote,
 		allowedPaths: options.allowedPaths,
 		allowedDomains: options.allowedDomains,
-		additionalScripts: options.additionalScript,
-		styles: options.styles,
+		ignoreHTTPSErrors: options.ignoreHTTPSErrors,
+		additionalScripts: options.additionalScripts,
+		additionalStyles: options.additionalStyles,
 		browserEndpoint: options.browserEndpoint,
 		timeout: options.timeout,
 		browserArgs: options.browserArgs,
@@ -93,31 +97,30 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 	};
 
 	const printer = new Printer(printerOptions);
-	if (isSingleFile) {
-		printer.on("page", (page) => {
-			if (page.position === 0) {
-				progress.updateText("Loaded");
-				progress.updateText(`Rendering: Page ${page.position + 1}`);
-			}
-			else {
-				progress.updateText(`Rendering: Page ${page.position + 1}`);
-			}
-		});
 
-		printer.on("rendered", (msg) => {
-			progress.updateText(msg);
-			progress.updateText("Generating");
-		});
+	const getOutFileName = (inputPath: string) => {
+		if (globPaths.length === 1 && options.outFile)
+			return options.outFile!.endsWith(".pdf") ? options.outFile! : `${options.outFile}.pdf`;
 
-		printer.on("postprocessing", () => {
-			progress.updateText("Generated");
-			progress.updateText("Processing");
-		});
-	}
+		const baseName = path.basename(inputPath);
+		const splitBaseName = baseName.split(":")[0];
+		const hostName = new URL(inputPath).hostname;
+		if (splitBaseName === hostName) {
+			/**
+			 * @example https://www.example.com/ www.example.com.pdf
+			*/
+			return `${hostName}.pdf`;
+		}
+
+		const filename = baseName.split("/").pop();
+		if (!filename?.length)
+			return `${baseName.split("/").filter(Boolean).join("_")}.pdf`;
+
+		return replaceExt(path.basename(inputPath), ".pdf");
+	};
 
 	const promises = globPaths.map(async (inputPath: string) => {
-		const getOutFile = () => options.outFile!.endsWith(".pdf") ? options.outFile! : `${options.outFile}.pdf`;
-		const outFileName = (globPaths.length === 1 && options.outFile) ? getOutFile() : replaceExt(path.basename(inputPath), ".pdf");
+		const outFileName = getOutFileName(inputPath);
 		let output = path.join(dir, options.outDir ?? "", outFileName);
 
 		let file;
@@ -139,8 +142,6 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 					process.exit(1);
 				});
 		}
-
-		isSingleFile && progress.updateText("Processed");
 
 		if (file && output) {
 			const isWrite = await writeFileSafe(output, file);
