@@ -146,7 +146,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 		if (file && output) {
 			const isWrite = await writeFileSafe(output, file);
 			if (isWrite) {
-				progress.updateNumber(1);
+				progress.increment(1);
 				isSingleFile && process.stdout.write(`\n\n ${green("  ✓ ")}${dim("Saved to ")} ${output}\n\n`);
 			}
 			else { process.exit(1); }
@@ -156,7 +156,9 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 		}
 		return true;
 	});
+
 	await Promise.all(promises);
+	await printer.close();
 	progress.stop();
 	process.exit(0);
 }

@@ -24,12 +24,15 @@ export function createProgress(indeterminate = false) {
 			progress.start(total, 0, { spin: getSpinner(spinner), text });
 			timer = setInterval(() => {
 				spinner += 1;
-				progress.update(current, { spin: getSpinner(spinner), text });
+				progress.update({ spin: getSpinner(spinner), text });
 			}, 200);
 		},
 		updateNumber(v: number) {
 			current = v;
-			progress.update(v, { spin: getSpinner(spinner), text });
+			progress.update(1, { spin: getSpinner(spinner), text });
+		},
+		increment(step: number) {
+			progress.increment(step, { spin: getSpinner(spinner), text });
 		},
 		updateText(t: string) {
 			text = t;

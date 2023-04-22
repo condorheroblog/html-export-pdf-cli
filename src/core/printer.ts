@@ -1,36 +1,15 @@
 import EventEmitter from "node:events";
 import path from "node:path";
 
-import type { Browser, Page as BrowserPage, PDFMargin, PDFOptions } from "puppeteer";
+import type { Browser, PDFMargin, PDFOptions, Page } from "puppeteer";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
 
-import { getDirname } from "../utils";
-import type { Page } from "../types";
 import type { HtmlExportPdfOptions } from "../";
 import { getOutline, setOutline } from "./outline";
-import { setMetadata, setTrimBoxes } from "./postprocesser";
+import { setMetadata } from "./postprocesser";
 
-const scriptPath = path.resolve(getDirname(), "./paged.global.js");
-
-interface PrinterOptions {
-	debug?: boolean
-	headless?: boolean
-	allowLocal?: boolean
-	allowRemote?: boolean
-	additionalScripts?: string[]
-	allowedPaths?: string[]
-	allowedDomains?: string[]
-	ignoreHTTPSErrors?: boolean
-	browserEndpoint?: string
-	browserArgs?: string[]
-	timeout?: number
-	closeAfter?: boolean
-	emulateMedia?: string
-	additionalStyles?: string[]
-	enableWarnings?: boolean
-}
-interface PrinterOptions {
+export interface PrinterOptions {
 	debug?: boolean
 	headless?: boolean
 	allowLocal?: boolean
@@ -64,8 +43,7 @@ export class Printer extends EventEmitter {
 	private emulateMedia: string;
 	private additionalStyles: string[];
 	private enableWarnings: boolean;
-	private pages: Page[];
-	private page?: BrowserPage;
+	private pages: Map<string, Page>;
 	private browser?: Browser;
 	public content?: string;
 
@@ -88,7 +66,7 @@ export class Printer extends EventEmitter {
 		this.additionalStyles = options.additionalStyles ?? [];
 		this.enableWarnings = options.enableWarnings ?? false;
 
-		this.pages = [];
+		this.pages = new Map();
 
 		if (this.debug) {
 			this.headless = false;
@@ -98,6 +76,8 @@ export class Printer extends EventEmitter {
 
 	async setup() {
 		const puppeteerOptions = {
+			// https://github.com/puppeteer/puppeteer/issues/2735#issuecomment-470309033
+			// pipe: true,
 			headless: this.headless,
 			args: ["--disable-dev-shm-usage", "--export-tagged-pdf"],
 			ignoreHTTPSErrors: this.ignoreHTTPSErrors,
@@ -122,47 +102,13 @@ export class Printer extends EventEmitter {
 		return this.browser;
 	}
 
-	async renderPagedjs(options: HtmlExportPdfOptions) {
-		const page = this.page!;
-		if (options.pageSize)
-			await page.addStyleTag({ content: `@page { size: ${options.pageSize}; }` });
-
-		else if (options.width || options.height)
-			await page.addStyleTag({ content: `@page { size: ${options.width};  ${options.height}; }` });
-
-		await page.evaluate(() => {
-			window.PagedConfig = window.PagedConfig ?? {};
-			window.PagedConfig.auto = false;
-		});
-
-		await page.addScriptTag({
-			path: scriptPath,
-		});
-
-		await page.evaluate(async () => {
-			// tsup.config.ts format IIFE
-			const { previewer } = window.PagedPolyfill;
-
-			if (window.PagedConfig.before)
-				await window.PagedConfig.before();
-
-			const done = await previewer.preview();
-
-			if (window.PagedConfig.after)
-				await window.PagedConfig.after(done);
-		}).catch((error) => {
-			throw error;
-		});
-
-		await page.waitForSelector(".pagedjs_pages");
-	}
-
 	async render(input: string) {
 		if (!this.browser)
 			await this.setup();
 
 		try {
-			const page = this.page = await this.browser!.newPage();
+			const page = await this.browser!.newPage();
+			this.pages.set(input, page);
 			page.setDefaultTimeout(this.timeout);
 			await page.emulateMediaType(this.emulateMedia);
 
@@ -226,10 +172,13 @@ export class Printer extends EventEmitter {
 	}
 
 	async pdf(input: string, options: HtmlExportPdfOptions) {
-		const page = await this.render(input)
-			.catch((e) => {
-				throw e;
-			});
+		let page = this.pages.get(input);
+		if (!page) {
+			page = await this.render(input)
+				.catch((e) => {
+					throw e;
+				});
+		}
 
 		try {
 			// Get metatags
@@ -282,24 +231,21 @@ export class Printer extends EventEmitter {
 			if (options.headerTemplate || options.footerTemplate)
 				pdfExportOptions.displayHeaderFooter = true;
 
+			const outline = await getOutline(page, options.outlineTags ?? []);
 			const pdf = await page.pdf(pdfExportOptions)
 				.catch((e) => {
 					throw e;
 				});
 
-			await this.renderPagedjs(options);
-			const outline = await getOutline(page, options.outlineTags ?? []);
-
 			this.closeAfter && page.close();
+			this.pages.delete(input);
 
 			this.emit("postprocessing");
 
 			const pdfDoc = await PDFDocument.load(pdf);
 
 			setMetadata(pdfDoc, meta);
-			setTrimBoxes(pdfDoc, this.pages);
 			setOutline(pdfDoc, outline, this.enableWarnings);
-
 			return await pdfDoc.save();
 		}
 		catch (error) {

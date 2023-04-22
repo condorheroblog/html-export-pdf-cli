@@ -1,6 +1,5 @@
 import type { PDFDocument } from "pdf-lib";
 import pkg from "../../package.json";
-import type { Page } from "../types";
 
 interface Meta {
   title?: string
@@ -12,27 +11,6 @@ interface Meta {
   creationDate?: Date | string
   modDate?: Date | string
   metadataDate?: Date | string
-}
-
-export function setTrimBoxes(pdfDoc: PDFDocument, pages: Page[]) {
-	const pdfPages = pdfDoc.getPages();
-
-	pdfPages.forEach((pdfPage, index) => {
-		const page = pages[index];
-
-		if (!page)
-			return; // page was not rendered
-
-		const { boxes } = page;
-
-		if (Object.is(boxes.media, boxes.crop))
-			return; // No bleed set
-
-		pdfPage.setTrimBox(boxes.crop.x,
-			boxes.crop.y,
-			boxes.crop.width + boxes.crop.x,
-			boxes.crop.height + boxes.crop.y);
-	});
 }
 
 export function setMetadata(pdfDoc: PDFDocument, meta: Meta) {
