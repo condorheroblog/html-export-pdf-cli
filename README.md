@@ -5,7 +5,7 @@
 [![LICENSE](https://img.shields.io/github/license/condorheroblog/html-export-pdf-cli.svg)](./LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/condorheroblog/html-export-pdf-cli?style=social)](https://github.com/condorheroblog/html-export-pdf-cli)
 
-Render Html to PDFs(**with outline**) using [Pagedjs](https://gitlab.pagedmedia.org/polyfills/pagedjs) and [Puppeteer](https://github.com/GoogleChrome/puppeteer).
+Render HTML to PDF(**with outline**) using [Puppeteer](https://github.com/GoogleChrome/puppeteer).
 
 ## Features
 
