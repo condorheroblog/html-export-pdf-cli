@@ -1,9 +1,9 @@
 # html-export-pdf-cli
 
-[![NPM version](https://img.shields.io/npm/v/@condorhero/html-export-pdf-cli)](https://www.npmjs.com/package/@condorhero/html-export-pdf-cli)
-[![NPM Downloads](https://img.shields.io/npm/dm/@condorhero/html-export-pdf-cli)](https://www.npmjs.com/package/@condorhero/html-export-pdf-cli)
+[![NPM version](https://img.shields.io/npm/v/html-export-pdf-cli)](https://www.npmjs.com/package/html-export-pdf-cli)
+[![NPM Downloads](https://img.shields.io/npm/dm/html-export-pdf-cli)](https://www.npmjs.com/package/html-export-pdf-cli)
 [![LICENSE](https://img.shields.io/github/license/condorheroblog/html-export-pdf-cli.svg)](./LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/condorheroblog/html-export-pdf-cli?style=social)](https://github.com/condorheroblog/html-export-pdf-cli)
+[![GitHub stars](https://img.shields.io/github/stars/condorheroblog/html-export-pdf-cli)](https://github.com/condorheroblog/html-export-pdf-cli)
 
 Render HTML to PDF(**with outline**) using [Puppeteer](https://github.com/GoogleChrome/puppeteer).
 
