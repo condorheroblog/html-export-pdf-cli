@@ -1,19 +1,23 @@
 import EventEmitter from "node:events";
 import path from "node:path";
 
-import type { Browser, PDFMargin, PDFOptions, Page } from "puppeteer";
+import type { Browser, PDFMargin, PDFOptions, Page, PaperFormat } from "puppeteer";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
 
-import type { HtmlExportPdfOptions } from "../";
 import { getOutline, setOutline } from "./outline";
 import { setMetadata } from "./postprocesser";
 
+export interface PrintPDFOptions extends Omit<PDFOptions, "format" | "margin"> {
+	pageSize?: PaperFormat
+	margin?: string | PDFMargin
+}
 export interface PrinterOptions {
 	debug?: boolean
 	headless?: boolean
 	allowLocal?: boolean
 	allowRemote?: boolean
+	outlineTags?: string[]
 	additionalScripts?: string[]
 	allowedPaths?: string[]
 	allowedDomains?: string[]
@@ -31,6 +35,7 @@ export class Printer extends EventEmitter {
 	private debug: boolean;
 	private headless: boolean;
 	private allowLocal: boolean;
+	private outlineTags: string[];
 	private allowRemote: boolean;
 	private additionalScripts: string[];
 	private allowedPaths: string[];
@@ -54,6 +59,7 @@ export class Printer extends EventEmitter {
 		this.headless = options.headless !== false;
 		this.allowLocal = options.allowLocal ?? false;
 		this.allowRemote = options.allowRemote ?? true;
+		this.outlineTags = options.outlineTags ?? ["h1", "h2", "h3", "h4", "h5", "h6"];
 		this.additionalScripts = options.additionalScripts ?? [];
 		this.allowedPaths = options.allowedPaths ?? [];
 		this.allowedDomains = options.allowedDomains ?? [];
@@ -171,7 +177,7 @@ export class Printer extends EventEmitter {
 		}
 	}
 
-	async pdf(input: string, options: HtmlExportPdfOptions) {
+	async pdf(input: string, options: PrintPDFOptions = {}) {
 		let page = this.pages.get(input);
 		if (!page) {
 			page = await this.render(input)
@@ -212,10 +218,10 @@ export class Printer extends EventEmitter {
 				width: options.width,
 				height: options.height,
 				landscape: options.landscape,
-				format: options.pageSize,
+				format: options.pageSize ?? "letter",
 			};
 
-			if (options.margin) {
+			if (typeof options.margin === "string") {
 				pdfExportOptions.margin = options.margin.split(",").reduce<PDFMargin>((obj, item) => {
 					const [key, value] = item.split("=");
 					if (key === "top" || key === "bottom" || key === "left" || key === "right")
@@ -224,6 +230,9 @@ export class Printer extends EventEmitter {
 					return obj;
 				}, {});
 			}
+			else if (options.margin) {
+				pdfExportOptions.margin = options.margin;
+			}
 
 			if (options.pageRanges)
 				pdfExportOptions.pageRanges = options.pageRanges;
@@ -231,7 +240,7 @@ export class Printer extends EventEmitter {
 			if (options.headerTemplate || options.footerTemplate)
 				pdfExportOptions.displayHeaderFooter = true;
 
-			const outline = await getOutline(page, options.outlineTags ?? []);
+			const outline = await getOutline(page, this.outlineTags ?? []);
 			const pdf = await page.pdf(pdfExportOptions)
 				.catch((e) => {
 					throw e;

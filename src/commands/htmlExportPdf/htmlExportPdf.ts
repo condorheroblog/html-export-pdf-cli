@@ -10,10 +10,11 @@ import { Printer } from "../../";
 
 export interface HtmlExportPdfOptions {
 	inputs: string[]
-	outFile?: string
+	outlineTags: string[]
+	outFile: string
 	outDir?: string
 	debug?: boolean
-	scale?: string
+	scale?: number
 	headerTemplate?: string
 	footerTemplate?: string
 	preferCSSPageSize?: boolean
@@ -26,19 +27,18 @@ export interface HtmlExportPdfOptions {
 	width?: number | string
 	height?: number | string
 	timeout?: number
-	html: boolean
-	blockLocal: boolean
-	blockRemote: boolean
+	html?: boolean
+	blockLocal?: boolean
+	blockRemote?: boolean
 	allowedPaths?: string[]
 	allowedDomains?: string[]
 	ignoreHTTPSErrors?: boolean
-	outlineTags?: string[]
-	additionalScripts: string[]
+	additionalScripts?: string[]
 	additionalStyles?: string[]
 	browserEndpoint?: string
 	browserArgs?: string[]
 	media?: string
-	warn: boolean
+	warn?: boolean
 }
 
 export async function htmlExportPdf(args: undefined | string[], options: HtmlExportPdfOptions) {
