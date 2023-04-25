@@ -62,7 +62,7 @@
 		"build": "tsup",
 		"build:watch": "tsup --watch",
 		"typecheck": "tsc --noEmit",
-		"release": "bumpp package.json packages/*/package.json && npm publish"
+		"release": "bumpp -r && npm publish"
 	},
 	"workspaces": [
 		"examples/*"
