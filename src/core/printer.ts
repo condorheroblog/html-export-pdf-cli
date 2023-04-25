@@ -1,12 +1,12 @@
 import EventEmitter from "node:events";
 import path from "node:path";
-
-import type { Browser, PDFOptions, Page } from "puppeteer";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
-
+import type { Browser, LaunchOptions, PDFOptions, Page } from "puppeteer";
 import { getOutline, setOutline } from "./outline";
 import { setMetadata } from "./postprocesser";
+
+export type { Browser, PDFOptions, Page, LaunchOptions };
 
 export interface PrinterOptions {
 	debug?: boolean
