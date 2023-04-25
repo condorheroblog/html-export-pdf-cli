@@ -1,17 +1,13 @@
 import EventEmitter from "node:events";
 import path from "node:path";
 
-import type { Browser, PDFMargin, PDFOptions, Page, PaperFormat } from "puppeteer";
+import type { Browser, PDFOptions, Page } from "puppeteer";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
 
 import { getOutline, setOutline } from "./outline";
 import { setMetadata } from "./postprocesser";
 
-export interface PrintPDFOptions extends Omit<PDFOptions, "format" | "margin"> {
-	pageSize?: PaperFormat
-	margin?: string | PDFMargin
-}
 export interface PrinterOptions {
 	debug?: boolean
 	headless?: boolean
@@ -177,7 +173,7 @@ export class Printer extends EventEmitter {
 		}
 	}
 
-	async pdf(input: string, options: PrintPDFOptions = {}) {
+	async pdf(input: string, options: PDFOptions = {}) {
 		let page = this.pages.get(input);
 		if (!page) {
 			page = await this.render(input)
@@ -218,21 +214,11 @@ export class Printer extends EventEmitter {
 				width: options.width,
 				height: options.height,
 				landscape: options.landscape,
-				format: options.pageSize ?? "letter",
+				format: options.format ?? "letter",
 			};
 
-			if (typeof options.margin === "string") {
-				pdfExportOptions.margin = options.margin.split(",").reduce<PDFMargin>((obj, item) => {
-					const [key, value] = item.split("=");
-					if (key === "top" || key === "bottom" || key === "left" || key === "right")
-						obj[key] = value;
-
-					return obj;
-				}, {});
-			}
-			else if (options.margin) {
+			if (options.margin)
 				pdfExportOptions.margin = options.margin;
-			}
 
 			if (options.pageRanges)
 				pdfExportOptions.pageRanges = options.pageRanges;

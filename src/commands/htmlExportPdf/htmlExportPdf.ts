@@ -2,7 +2,7 @@ import path from "node:path";
 import { accessSync, constants } from "node:fs";
 
 import { dim, green, red } from "colorette";
-import type { PaperFormat } from "puppeteer";
+import type { PDFMargin, PaperFormat } from "puppeteer";
 import fg from "fast-glob";
 
 import { createProgress, isValidUrl, replaceExt, writeFileSafe } from "../../utils";
@@ -136,7 +136,23 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 			await printer.preview(inputPath);
 		}
 		else {
-			file = await printer.pdf(inputPath, options)
+			const format = options.pageSize;
+
+			let margin: PDFMargin = {};
+			if (options.margin) {
+				margin = options.margin.split(",").reduce<PDFMargin>((obj, item) => {
+					const [key, value] = item.split("=");
+					if (key === "top" || key === "bottom" || key === "left" || key === "right")
+						obj[key] = value;
+
+					return obj;
+				}, {});
+			}
+			file = await printer.pdf(inputPath, {
+				...options,
+				margin,
+				format,
+			})
 				.catch((e: ErrorOptions) => {
 					console.error(e);
 					process.exit(1);
