@@ -10,7 +10,7 @@ export type { Browser, PDFOptions, Page, LaunchOptions };
 
 export interface PrinterOptions {
 	debug?: boolean
-	headless?: boolean
+	headless?: boolean | "new"
 	allowLocal?: boolean
 	allowRemote?: boolean
 	outlineTags?: string[]
@@ -29,7 +29,7 @@ export interface PrinterOptions {
 
 export class Printer extends EventEmitter {
 	private debug: boolean;
-	private headless: boolean;
+	private headless: boolean | "new";
 	private allowLocal: boolean;
 	private outlineTags: string[];
 	private allowRemote: boolean;
@@ -52,7 +52,7 @@ export class Printer extends EventEmitter {
 		super();
 
 		this.debug = options.debug ?? false;
-		this.headless = options.headless !== false;
+		this.headless = options.headless ?? "new";
 		this.allowLocal = options.allowLocal ?? false;
 		this.allowRemote = options.allowRemote ?? true;
 		this.outlineTags = options.outlineTags ?? ["h1", "h2", "h3", "h4", "h5", "h6"];
@@ -203,7 +203,7 @@ export class Printer extends EventEmitter {
 			});
 
 			const pdfExportOptions: PDFOptions = {
-				scale: !options.scale ? 1 : +options.scale,
+				scale: !options.scale ? 1 : options.scale,
 				timeout: this.timeout,
 				displayHeaderFooter: false,
 				headerTemplate: options.headerTemplate,

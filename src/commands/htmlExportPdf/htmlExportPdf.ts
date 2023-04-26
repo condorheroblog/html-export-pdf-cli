@@ -13,6 +13,7 @@ export interface HtmlExportPdfOptions {
 	outlineTags: string[]
 	outFile: string
 	outDir?: string
+	headless?: boolean | "new"
 	debug?: boolean
 	scale?: number
 	headerTemplate?: string
@@ -81,7 +82,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 
 	const printerOptions = {
 		debug: options.debug,
-		headless: true,
+		headless: options.headless,
 		allowLocal: !options.blockLocal,
 		allowRemote: !options.blockRemote,
 		allowedPaths: options.allowedPaths,
