@@ -177,6 +177,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 	await Promise.all(promises);
 	await printer.close();
 	progress.stop();
+	!isSingleFile && process.stdout.write(`\n\n ${green("  ✓ ")}${dim("Saved to ")} ${path.join(dir, options.outDir ?? "")}\n\n`);
 	process.exit(0);
 }
 
