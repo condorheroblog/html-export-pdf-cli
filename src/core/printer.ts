@@ -105,48 +105,60 @@ export class Printer extends EventEmitter {
 		return this.browser;
 	}
 
+	async createNewPage(input: string) {
+		if (!this.browser)
+			await this.setup();
+		const page = await this.browser!.newPage();
+		this.pages.set(input, page);
+		page.setDefaultTimeout(this.timeout);
+		await page.emulateMediaType(this.emulateMedia);
+
+		if (this.needsAllowedRules()) {
+			await page.setRequestInterception(true);
+
+			page.on("request", (request) => {
+				const uri = new URL(request.url());
+				const { host, protocol, pathname } = uri;
+				const local = protocol === "file:";
+
+				if (local && !this.withinAllowedPath(pathname)) {
+					request.abort();
+					return;
+				}
+
+				if (local && !this.allowLocal) {
+					request.abort();
+					return;
+				}
+
+				if (host && !this.isAllowedDomain(host)) {
+					request.abort();
+					return;
+				}
+
+				if (host && !this.allowRemote) {
+					request.abort();
+					return;
+				}
+
+				request.continue();
+			});
+		}
+		return page;
+	}
+
 	async render(input: string) {
 		if (!this.browser)
 			await this.setup();
 
 		try {
-			const page = await this.browser!.newPage();
-			this.pages.set(input, page);
-			page.setDefaultTimeout(this.timeout);
-			await page.emulateMediaType(this.emulateMedia);
-
-			if (this.needsAllowedRules()) {
-				await page.setRequestInterception(true);
-
-				page.on("request", (request) => {
-					const uri = new URL(request.url());
-					const { host, protocol, pathname } = uri;
-					const local = protocol === "file:";
-
-					if (local && !this.withinAllowedPath(pathname)) {
-						request.abort();
-						return;
-					}
-
-					if (local && !this.allowLocal) {
-						request.abort();
-						return;
-					}
-
-					if (host && !this.isAllowedDomain(host)) {
-						request.abort();
-						return;
-					}
-
-					if (host && !this.allowRemote) {
-						request.abort();
-						return;
-					}
-
-					request.continue();
-				});
+			let page = this.pages.get(input);
+			if (!page) {
+				page = await this.createNewPage(input)
+					.catch((e) => {
+						throw e;
+					});
 			}
-
 			await page.goto(input, { waitUntil: "networkidle2" });
 			this.content = await page.content();
 
