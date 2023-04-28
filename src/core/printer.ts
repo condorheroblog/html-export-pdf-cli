@@ -76,13 +76,14 @@ export class Printer extends EventEmitter {
 		}
 	}
 
-	async setup() {
+	async setup(puppeteerLaunchOptions?: LaunchOptions) {
 		const puppeteerOptions = {
 			// https://github.com/puppeteer/puppeteer/issues/2735#issuecomment-470309033
 			// pipe: true,
 			headless: this.headless,
 			args: ["--disable-dev-shm-usage", "--export-tagged-pdf"],
 			ignoreHTTPSErrors: this.ignoreHTTPSErrors,
+			...puppeteerLaunchOptions,
 		};
 
 		if (this.allowLocal)
@@ -168,7 +169,7 @@ export class Printer extends EventEmitter {
 			return page;
 		}
 		catch (error) {
-			this.closeAfter && this.close();
+			this.closeAfter && await this.closeBrowser();
 			throw error;
 		}
 	}
@@ -232,7 +233,7 @@ export class Printer extends EventEmitter {
 					throw e;
 				});
 
-			this.closeAfter && page.close();
+			this.closeAfter && await page.close();
 			this.pages.delete(input);
 
 			this.emit("postprocessing");
@@ -244,32 +245,35 @@ export class Printer extends EventEmitter {
 			return await pdfDoc.save();
 		}
 		catch (error) {
-			this.closeAfter && this.close();
+			this.closeAfter && await this.closeBrowser();
 			throw error;
 		}
 	}
 
 	async html(input: string) {
-		const page = await this.render(input);
+		let page = this.pages.get(input);
+		if (!page) {
+			page = await this.render(input)
+				.catch((e) => {
+					throw e;
+				});
+		}
 
 		const content = await page.content();
 
 		if (this.closeAfter) {
-			page.close();
-			this.close();
+			await page.close();
+			await this.closeBrowser();
 		}
 
 		return content;
 	}
 
-	async preview(input: string) {
-		const page = await this.render(input);
-		this.closeAfter && this.close();
-		return page;
-	}
-
-	async close() {
-		return this.browser && this.browser.close();
+	async closeBrowser() {
+		if (this.browser) {
+			await this.browser.close();
+			this.browser = undefined;
+		}
 	}
 
 	needsAllowedRules() {

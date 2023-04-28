@@ -134,7 +134,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 			output = replaceExt(output, ".html");
 		}
 		else if (options.debug === true) {
-			await printer.preview(inputPath);
+			await printer.render(inputPath);
 		}
 		else {
 			const format = options.pageSize;
@@ -175,7 +175,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 	});
 
 	await Promise.all(promises);
-	await printer.close();
+	await printer.closeBrowser();
 	progress.stop();
 	!isSingleFile && process.stdout.write(`\n\n ${green("  ✓ ")}${dim("Saved to ")} ${path.join(dir, options.outDir ?? "")}\n\n`);
 	process.exit(0);
