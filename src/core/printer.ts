@@ -189,7 +189,7 @@ export class Printer extends EventEmitter {
 		}
 	}
 
-	async pdf(input: string, options: PDFOptions = {}) {
+	async pdf(input: string, options: PDFOptions = {}, pageContainerSelector?: string) {
 		let page = this.pages.get(input);
 		if (!page) {
 			page = await this.render(input)
@@ -242,7 +242,7 @@ export class Printer extends EventEmitter {
 			if (options.headerTemplate || options.footerTemplate)
 				pdfExportOptions.displayHeaderFooter = true;
 
-			const outline = await getOutline(page, this.outlineTags ?? [], this.outlineContainerSelector);
+			const outline = await getOutline(page, this.outlineTags ?? [], pageContainerSelector ?? this.outlineContainerSelector);
 			const pdf = await page.pdf(pdfExportOptions)
 				.catch((e) => {
 					throw e;
