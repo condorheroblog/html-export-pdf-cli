@@ -120,14 +120,39 @@ function sanitize(str: string) {
 // }
 
 /**
+ * Format the outline container selector by removing extra spaces and ensuring trailing space.
+ *
+ * @param {string} outlineContainerSelector - The selector for the outline container.
+ * @returns {string} The formatted selector.
+ */
+export function formatOutlineContainerSelector(outlineContainerSelector: string) {
+	// If the selector is empty, return an empty string.
+	if (!outlineContainerSelector)
+		return "";
+
+	// Split the selector string by whitespace.
+	const selectors = outlineContainerSelector.split(/\s+/);
+
+	// Filter out empty selectors.
+	const validSelectors = selectors.filter(selector => selector);
+
+	// Join the valid selectors with spaces and add a trailing space.
+	const formattedSelector = `${validSelectors.join(" ")} `;
+
+	return formattedSelector;
+}
+
+/**
  * Gets the outline of a webpage using a headless browser.
  * @param {Page} page - The page to evaluate.
  * @param {string[]} tags - An array of tag names to use for the outline.
+ * @param {string} outlineContainerSelector - Outline Container Selector
  * @returns {Promise<OutlineNode[]>} A Promise that resolves to an array of top-level OutlineNode objects representing the parsed outline.
  */
-export async function getOutline(page: Page, tags: string[]) {
-	return await page.evaluate((tags) => {
-		const tagsToProcess = Array.from(document.querySelectorAll(tags.join(","))).reverse();
+export async function getOutline(page: Page, tags: string[], outlineContainerSelector = "") {
+	const preSelector = formatOutlineContainerSelector(outlineContainerSelector);
+	return await page.evaluate((tags, outlineSelector) => {
+		const tagsToProcess = Array.from(document.querySelectorAll(outlineSelector)).reverse();
 		const root: RootOutlineNode = { children: [], depth: -1, parent: undefined };
 		let currentOutlineNode = root;
 
@@ -152,7 +177,7 @@ export async function getOutline(page: Page, tags: string[]) {
 			}
 			else {
 				const newNode: OutlineNode = {
-				// https://stackoverflow.com/questions/57551589/property-innertext-does-not-exist-on-type-element
+					// https://stackoverflow.com/questions/57551589/property-innertext-does-not-exist-on-type-element
 					title: (<HTMLElement>tag).innerText.trim(),
 					destination: dest,
 					children: [],
@@ -185,7 +210,7 @@ export async function getOutline(page: Page, tags: string[]) {
 		};
 		stripParentProperty(root);
 		return root.children;
-	}, tags);
+	}, tags, tags.map(titleItem => `${preSelector}${titleItem}`).join(","));
 }
 
 /**

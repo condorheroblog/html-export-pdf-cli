@@ -25,6 +25,7 @@ export interface PrinterOptions {
 	emulateMedia?: string
 	additionalStyles?: string[]
 	enableWarnings?: boolean
+	outlineContainerSelector?: string
 }
 
 export class Printer extends EventEmitter {
@@ -46,6 +47,7 @@ export class Printer extends EventEmitter {
 	private enableWarnings: boolean;
 	private pages: Map<string, Page>;
 	private browser?: Browser;
+	private outlineContainerSelector: string;
 	public content?: string;
 
 	constructor(options: PrinterOptions = {}) {
@@ -67,6 +69,7 @@ export class Printer extends EventEmitter {
 		this.emulateMedia = options.emulateMedia ?? "print";
 		this.additionalStyles = options.additionalStyles ?? [];
 		this.enableWarnings = options.enableWarnings ?? false;
+		this.outlineContainerSelector = options.outlineContainerSelector ?? "";
 
 		this.pages = new Map();
 
@@ -239,7 +242,7 @@ export class Printer extends EventEmitter {
 			if (options.headerTemplate || options.footerTemplate)
 				pdfExportOptions.displayHeaderFooter = true;
 
-			const outline = await getOutline(page, this.outlineTags ?? []);
+			const outline = await getOutline(page, this.outlineTags ?? [], this.outlineContainerSelector);
 			const pdf = await page.pdf(pdfExportOptions)
 				.catch((e) => {
 					throw e;

@@ -40,6 +40,7 @@ export interface HtmlExportPdfOptions {
 	browserArgs?: string[]
 	media?: string
 	warn?: boolean
+	outlineContainerSelector?: string
 }
 
 export async function htmlExportPdf(args: undefined | string[], options: HtmlExportPdfOptions) {
@@ -95,6 +96,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 		browserArgs: options.browserArgs,
 		emulateMedia: options.media,
 		enableWarnings: options.warn,
+		outlineContainerSelector: options.outlineContainerSelector,
 	};
 
 	const printer = new Printer(printerOptions);
