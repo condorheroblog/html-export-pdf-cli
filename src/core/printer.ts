@@ -2,6 +2,7 @@ import EventEmitter from "node:events";
 import path from "node:path";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
+import { red } from "colorette";
 import type { Browser, LaunchOptions, PDFOptions, Page } from "puppeteer";
 import { getOutline, setOutline } from "./outline";
 import { setMetadata } from "./postprocesser";
@@ -21,7 +22,6 @@ export interface PrinterOptions {
 	browserEndpoint?: string
 	browserArgs?: string[]
 	timeout?: number
-	closeAfter?: boolean
 	emulateMedia?: string
 	additionalStyles?: string[]
 	enableWarnings?: boolean
@@ -41,7 +41,6 @@ export class Printer extends EventEmitter {
 	private browserWSEndpoint?: string;
 	private browserArgs: string[];
 	private timeout: number;
-	private closeAfter: boolean;
 	private emulateMedia: string;
 	private additionalStyles: string[];
 	private enableWarnings: boolean;
@@ -65,7 +64,6 @@ export class Printer extends EventEmitter {
 		this.browserWSEndpoint = options.browserEndpoint;
 		this.browserArgs = options.browserArgs ?? [];
 		this.timeout = options.timeout ?? 0;
-		this.closeAfter = options.closeAfter ?? true;
 		this.emulateMedia = options.emulateMedia ?? "print";
 		this.additionalStyles = options.additionalStyles ?? [];
 		this.enableWarnings = options.enableWarnings ?? false;
@@ -73,10 +71,8 @@ export class Printer extends EventEmitter {
 
 		this.pages = new Map();
 
-		if (this.debug) {
+		if (this.debug)
 			this.headless = false;
-			this.closeAfter = false;
-		}
 	}
 
 	async setup(puppeteerLaunchOptions?: LaunchOptions) {
@@ -184,7 +180,7 @@ export class Printer extends EventEmitter {
 			return page;
 		}
 		catch (error) {
-			this.closeAfter && await this.closeBrowser();
+			await this.closeBrowser();
 			throw error;
 		}
 	}
@@ -248,9 +244,6 @@ export class Printer extends EventEmitter {
 					throw e;
 				});
 
-			this.closeAfter && await page.close();
-			this.pages.delete(input);
-
 			this.emit("postprocessing");
 
 			const pdfDoc = await PDFDocument.load(pdf);
@@ -260,7 +253,7 @@ export class Printer extends EventEmitter {
 			return await pdfDoc.save();
 		}
 		catch (error) {
-			this.closeAfter && await this.closeBrowser();
+			await this.closeBrowser();
 			throw error;
 		}
 	}
@@ -276,18 +269,27 @@ export class Printer extends EventEmitter {
 
 		const content = await page.content();
 
-		if (this.closeAfter) {
-			await page.close();
-			await this.closeBrowser();
-		}
-
 		return content;
+	}
+
+	async closePage(input: string) {
+		const page = this.pages.get(input);
+		if (page) {
+			await page.close();
+			this.pages.delete(input);
+		}
+		else {
+			process.stdout.write(red(`Could not find page with input: ${input}`));
+		}
 	}
 
 	async closeBrowser() {
 		if (this.browser) {
 			await this.browser.close();
 			this.browser = undefined;
+		}
+		else {
+			process.stdout.write(red("Browser instance not found"));
 		}
 	}
 

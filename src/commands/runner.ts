@@ -12,7 +12,7 @@ export function registerCommands(cliInstance: Command, programName: string) {
 			createHtmlExportPdf(cliInstance);
 			break;
 		default:
-			red("no command name");
+			process.stdout.write(red("no command name"));
 			break;
 	}
 }

@@ -47,7 +47,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 	const inputArr = options.inputs.length ? options.inputs : (args ?? []);
 
 	if (!inputArr.length) {
-		red("You must include an input path");
+		process.stdout.write(red("You must include an input path"));
 		process.exit(1);
 	}
 
@@ -56,7 +56,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 	const globPaths = inputArr.reduce<string[]>((acc, inputPath) => {
 		if (!isValidUrl(inputPath)) {
 			if (![".htm", ".html", ".xhtml"].includes(path.extname(inputPath))) {
-				red(`${inputPath} is must a html or xhtml file`);
+				process.stdout.write(red(`${inputPath} is must a html or xhtml file`));
 				process.exit(1);
 			}
 			try {
@@ -122,61 +122,64 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 		return replaceExt(path.basename(inputPath), ".pdf");
 	};
 
-	const promises = globPaths.map(async (inputPath: string) => {
-		const outFileName = getOutFileName(inputPath);
-		let output = path.join(dir, options.outDir ?? "", outFileName);
-
-		let file;
-		if (options.html) {
-			file = await printer.html(inputPath)
-				.catch((e: ErrorOptions) => {
-					console.error(e);
-					process.exit(1);
-				});
-			output = replaceExt(output, ".html");
-		}
-		else if (options.debug === true) {
-			await printer.render(inputPath);
-		}
-		else {
-			const format = options.pageSize;
-
-			let margin: PDFMargin = {};
-			if (options.margin) {
-				margin = options.margin.split(",").reduce<PDFMargin>((obj, item) => {
-					const [key, value] = item.split("=");
-					if (key === "top" || key === "bottom" || key === "left" || key === "right")
-						obj[key] = value;
-
-					return obj;
-				}, {});
+	for (const inputPath of globPaths) {
+		try {
+			const outFileName = getOutFileName(inputPath);
+			let output = path.join(dir, options.outDir ?? "", outFileName);
+			let file;
+			if (options.html) {
+				file = await printer.html(inputPath)
+					.catch((e: ErrorOptions) => {
+						console.error(e);
+						process.exit(1);
+					});
+				output = replaceExt(output, ".html");
 			}
-			file = await printer.pdf(inputPath, {
-				...options,
-				margin,
-				format,
-			})
-				.catch((e: ErrorOptions) => {
-					console.error(e);
-					process.exit(1);
-				});
-		}
-
-		if (file && output) {
-			const isWrite = await writeFileSafe(output, file);
-			if (isWrite) {
-				progress.increment(1);
-				isSingleFile && process.stdout.write(`\n\n ${green("  ✓ ")}${dim("Saved to ")} ${output}\n\n`);
+			else if (options.debug === true) {
+				await printer.render(inputPath);
 			}
-			else { process.exit(1); }
-		}
-		else if (file) {
-			process.stdout.write(file);
-		}
-		return true;
-	});
+			else {
+				const format = options.pageSize;
 
-	await Promise.all(promises);
+				let margin: PDFMargin = {};
+				if (options.margin) {
+					margin = options.margin.split(",").reduce<PDFMargin>((obj, item) => {
+						const [key, value] = item.split("=");
+						if (key === "top" || key === "bottom" || key === "left" || key === "right")
+							obj[key] = value;
+
+						return obj;
+					}, {});
+				}
+				file = await printer.pdf(inputPath, {
+					...options,
+					margin,
+					format,
+				})
+					.catch((e: ErrorOptions) => {
+						console.error(e);
+						process.exit(1);
+					});
+			}
+
+			if (file && output) {
+				const isWrite = await writeFileSafe(output, file);
+				if (isWrite) {
+					progress.increment(1);
+					isSingleFile && process.stdout.write(`\n\n ${green("  ✓ ")}${dim("Saved to ")} ${output}\n\n`);
+				}
+				else { process.exit(1); }
+			}
+			else if (file) {
+				process.stdout.write(file);
+			}
+			await printer.closePage(inputPath);
+		}
+		catch (error) {
+			console.error(error);
+		}
+	}
+
 	await printer.closeBrowser();
 	progress.stop();
 	!isSingleFile && process.stdout.write(`\n\n ${green("  ✓ ")}${dim("Saved to ")} ${path.join(dir, options.outDir ?? "")}\n\n`);
