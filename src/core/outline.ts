@@ -9,7 +9,7 @@
 import type { Page } from "puppeteer";
 import type { DictMap } from "pdf-lib/src/core/objects/PDFDict";
 import type { PDFContext, PDFDocument, PDFRef } from "pdf-lib";
-import { decode as htmlEntitiesDecode } from "html-entities";
+import { decode } from "html-entities";
 import { PDFArray, PDFDict, PDFHexString, PDFName, PDFNumber } from "pdf-lib";
 
 export interface RootOutlineNode {
@@ -41,15 +41,6 @@ export interface OutlineRef {
 	italic?: boolean
 	bold?: boolean
 	color?: number[]
-}
-
-const SanitizeXMLRx = /<[^>]+>/g;
-
-function sanitize(str: string) {
-	if (str.includes("<"))
-		str = str.replace(SanitizeXMLRx, "");
-
-	return htmlEntitiesDecode(str);
 }
 
 /**
@@ -257,7 +248,7 @@ function buildPdfObjectsForOutline(outlinesWithRef: OutlineRef[], context: PDFCo
 		const next = outlinesWithRef[i + 1];
 
 		const pdfObject: DictMap = new Map([]);
-		pdfObject.set(PDFName.of("Title"), PDFHexString.fromText(sanitize(item.title)));
+		pdfObject.set(PDFName.of("Title"), PDFHexString.fromText(decode(item.title)));
 		pdfObject.set(PDFName.of("Dest"), PDFName.of(item.destination));
 		pdfObject.set(PDFName.of("Parent"), item.parentRef);
 
