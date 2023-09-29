@@ -7,7 +7,6 @@
 dist
 node_modules
 pnpm-global
-examples
 demo
 
 ### Node template

@@ -1,0 +1,23 @@
+{
+	"name": "single-file-html",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"html-export-pdf-cli:headless": "html-export-pdf-cli index.html --headless true -o result.pdf",
+		"html-export-pdf-cli:headless-false": "html-export-pdf-cli index.html --headless false -o result.pdf",
+		"html-export-pdf-cli:margin": "html-export-pdf-cli --margin top=10,bottom=10,left=10,right=10 index.html -o result.pdf",
+		"html-export-pdf-cli:A0": "html-export-pdf-cli -s A0 index.html -o result.pdf",
+		"html-export-pdf-cli:one": "html-export-pdf-cli index.html -o result.pdf",
+		"html-export-pdf-cli:introduction-vuePress-next": "html-export-pdf-cli introduction-vuePress-next.html -o introduction-vuePress-next.pdf",
+		"html-export-pdf-cli:argv": "html-export-pdf-cli index.html test.html -o result.pdf",
+		"html-export-pdf-cli:option": "html-export-pdf-cli --inputs index.html --inputs test.html -o result.pdf",
+		"html-export-pdf-cli:version": "html-export-pdf-cli -V",
+		"html-export-pdf-cli:outlineContainerSelector": "html-export-pdf-cli 2.html --outlineContainerSelector .doc",
+		"html-export-pdf-cli:2": "html-export-pdf-cli 2.html",
+		"html-export-pdf-cli:1": "html-export-pdf-cli 1.html",
+		"html-export-pdf-cli:help": "html-export-pdf-cli --help"
+	},
+	"devDependencies": {
+		"html-export-pdf-cli": "workspace:^"
+	}
+}
