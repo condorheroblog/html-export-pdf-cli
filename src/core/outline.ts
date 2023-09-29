@@ -210,7 +210,7 @@ export async function getOutline(page: Page, tags: string[], outlineContainerSel
  * @param {PDFContext} context - The PDF context to use.
  * @param {PDFRef} parentRef - The reference of the parent outline item.
  * @returns {OutlineRef[]} An array of outline items with references.
-*/
+ */
 function addRefsForOutlineItems(outlines: OutlineNode[], context: PDFContext, parentRef: PDFRef): OutlineRef[] {
 	return outlines.map((item) => {
 		const itemRef = context.nextRef();
@@ -227,7 +227,7 @@ function addRefsForOutlineItems(outlines: OutlineNode[], context: PDFContext, pa
  * Counts the total number of outline items in a nested outline tree.
  * @param {OutlineNode[]} outlines - The nested outline tree to count the items of.
  * @returns {number} The total number of outline items in the tree.
-*/
+ */
 function countChildrenOfOutline(outlines: OutlineNode[]) {
 	let count = 0;
 	for (const item of outlines) {
@@ -241,7 +241,7 @@ function countChildrenOfOutline(outlines: OutlineNode[]) {
  * Builds the PDF objects for a nested outline tree with references.
  * @param {OutlineRef[]} outlinesWithRef - The nested outline tree with references.
  * @param {PDFContext} context - The PDF context to use.
-*/
+ */
 function buildPdfObjectsForOutline(outlinesWithRef: OutlineRef[], context: PDFContext) {
 	for (const [i, item] of outlinesWithRef.entries()) {
 		const prev = outlinesWithRef[i - 1];
@@ -285,7 +285,7 @@ function buildPdfObjectsForOutline(outlinesWithRef: OutlineRef[], context: PDFCo
  * Generates warnings for each missing destination in a nested outline tree.
  * @param {OutlineNode[]} layer - The nested outline tree to generate warnings for.
  * @param {PDFDocument} pdfDoc - The PDF document to generate warnings for.
-*/
+ */
 function generateWarningsAboutMissingDestinations(layer: OutlineNode[], pdfDoc: PDFDocument) {
 	const dests = pdfDoc.context.lookup(pdfDoc.catalog.get(PDFName.of("Dests")), PDFDict);
 	// Dests can be undefined if the PDF wasn't successfully generated (for instance if Paged.js threw an exception)
@@ -306,7 +306,7 @@ function generateWarningsAboutMissingDestinations(layer: OutlineNode[], pdfDoc: 
  * @param {OutlineNode[]} outlines - The nested outline tree to use as outlines.
  * @param {boolean} [enableWarnings=false] - Whether to generate warnings for missing destinations.
  * @returns {PDFDocument} The PDF document with outlines set.
-*/
+ */
 
 export async function setOutline(pdfDoc: PDFDocument, outlines: OutlineNode[], enableWarnings = false) {
 	const context = pdfDoc.context;

@@ -1,9 +1,11 @@
 import EventEmitter from "node:events";
 import path from "node:path";
+import process from "node:process";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
 import { red } from "colorette";
 import type { Browser, LaunchOptions, PDFOptions, Page } from "puppeteer";
+
 import { getOutline, setOutline } from "./outline";
 import { setMetadata } from "./postprocesser";
 

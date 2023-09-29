@@ -6,7 +6,7 @@
 {
 	"extends": "@antfu/eslint-config-ts",
 	"rules": {
-		"no-tabs": "off",
+		"@stylistic/js/no-tabs": "off",
 		"semi": "off",
 		"@typescript-eslint/semi": [
 			"error",
@@ -17,7 +17,7 @@
 			"error",
 			"double"
 		],
-		"@typescript-eslint/indent": "off",
+		"@stylistic/ts/indent": "off",
 		"indent": [
 			"error",
 			"tab",

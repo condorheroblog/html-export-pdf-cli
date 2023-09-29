@@ -1,3 +1,4 @@
+import process from "node:process";
 import type { Command } from "commander";
 import { program } from "commander";
 import { red } from "colorette";

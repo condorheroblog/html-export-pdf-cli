@@ -1,5 +1,6 @@
 import path from "node:path";
 import { accessSync, constants } from "node:fs";
+import process from "node:process";
 
 import { dim, green, red } from "colorette";
 import type { PDFMargin, PaperFormat } from "puppeteer";
@@ -111,7 +112,7 @@ export async function htmlExportPdf(args: undefined | string[], options: HtmlExp
 		if (splitBaseName === hostName) {
 			/**
 			 * @example https://www.example.com/ www.example.com.pdf
-			*/
+			 */
 			return `${hostName}.pdf`;
 		}
 
