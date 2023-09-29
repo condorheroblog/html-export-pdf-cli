@@ -13,7 +13,7 @@ export function createProgress(indeterminate = false) {
 	let spinner = 0;
 	let text = "Generating";
 	let title = "";
-	let timer: NodeJS.Timer;
+	let timer: NodeJS.Timeout;
 
 	const progress = new SingleBar({
 		clearOnComplete: false,
