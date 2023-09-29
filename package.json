@@ -16,8 +16,12 @@
 	},
 	"keywords": [
 		"html-export-pdf-cli",
+		"html-export-outline-pdf",
+		"html-export-bookmark-pdf",
 		"html-export-pdf",
 		"html-to-pdf-cli",
+		"bookmark-pdf",
+		"outline-pdf",
 		"html-to-pdf",
 		"htmltopdf",
 		"html2pdf",
@@ -25,7 +29,6 @@
 	],
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js",
 			"require": "./dist/index.cjs"
 		}
