@@ -75,7 +75,7 @@
 		"fast-glob": "^3.3.2",
 		"html-entities": "^2.5.2",
 		"pdf-lib": "1.17.1",
-		"puppeteer": "^22.15.0"
+		"puppeteer": "^24.15.0"
 	},
 	"devDependencies": {
 		"@antfu/eslint-config": "^2.24.1",
